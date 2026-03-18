@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="256" y2="256">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="45%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <mask id="holes">
+      <rect width="256" height="256" fill="white"/>
+      <circle cx="48" cy="48" r="11" fill="black"/>
+      <circle cx="208" cy="48" r="11" fill="black"/>
+      <circle cx="128" cy="128" r="11" fill="black"/>
+      <circle cx="48" cy="208" r="11" fill="black"/>
+      <circle cx="208" cy="208" r="11" fill="black"/>
+    </mask>
+  </defs>
+
+  <g mask="url(#holes)">
+    <!-- Z bars: top horizontal, diagonal, bottom horizontal -->
+    <line x1="48" y1="48" x2="208" y2="48" stroke="url(#grad)" stroke-width="22" stroke-linecap="round"/>
+    <line x1="208" y1="48" x2="48" y2="208" stroke="url(#grad)" stroke-width="22" stroke-linecap="round"/>
+    <line x1="48" y1="208" x2="208" y2="208" stroke="url(#grad)" stroke-width="22" stroke-linecap="round"/>
+
+    <!-- Ring nodes (perfect circles) -->
+    <circle cx="48" cy="48" r="26" fill="url(#grad)"/>
+    <circle cx="208" cy="48" r="26" fill="url(#grad)"/>
+    <circle cx="128" cy="128" r="26" fill="url(#grad)"/>
+    <circle cx="48" cy="208" r="26" fill="url(#grad)"/>
+    <circle cx="208" cy="208" r="26" fill="url(#grad)"/>
+  </g>
+</svg>

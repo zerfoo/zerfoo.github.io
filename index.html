@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerfoo — Pure Go ML Inference Framework</title>
+<meta name="description" content="Embed any GGUF model in your Go application with go build. 245 tok/s on Gemma 3 1B — 20% faster than Ollama. Zero CGo.">
+<meta name="theme-color" content="#8B5CF6">
+<link rel="icon" href="zerfoo.svg" type="image/svg+xml">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#8B5CF6;--blue:#3B82F6;--cyan:#06B6D4;
+  --bg:#0B0F1A;--bg2:#111827;--bg3:#1F2937;
+  --fg:#F9FAFB;--fg2:#D1D5DB;--fg3:#9CA3AF;
+  --grad:linear-gradient(135deg,var(--purple),var(--blue),var(--cyan));
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --max:1120px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--blue);text-decoration:none;transition:color .15s}
+a:hover{color:var(--cyan)}
+::selection{background:var(--purple);color:#fff}
+
+/* Layout */
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+section{padding:80px 0}
+@media(max-width:768px){section{padding:56px 0}}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:100;background:rgba(11,15,26,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+nav .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.125rem;color:var(--fg)}
+nav .logo img{width:32px;height:32px}
+nav .links{display:flex;gap:24px;font-size:.875rem;align-items:center}
+nav .links a{color:var(--fg2)}
+nav .links a:hover{color:var(--fg)}
+.gh-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;background:var(--bg3);color:var(--fg)!important;font-size:.8125rem;font-weight:500;transition:background .15s}
+.gh-btn:hover{background:#374151}
+.gh-btn svg{width:16px;height:16px;fill:currentColor}
+
+/* Mobile nav */
+.nav-toggle{display:none;background:none;border:none;color:var(--fg);cursor:pointer;padding:4px}
+@media(max-width:640px){
+  .nav-toggle{display:block}
+  nav .links{display:none;position:absolute;top:64px;left:0;right:0;flex-direction:column;background:var(--bg2);padding:16px 24px;gap:16px;border-bottom:1px solid rgba(255,255,255,.06)}
+  nav .links.open{display:flex}
+}
+
+/* Hero */
+.hero{padding:120px 0 80px;text-align:center}
+@media(max-width:768px){.hero{padding:80px 0 56px}}
+.hero-logo{width:80px;height:80px;margin:0 auto 24px}
+.hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-bottom:16px}
+.hero h1 .grad{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .sub{font-size:clamp(1rem,2.5vw,1.25rem);color:var(--fg2);max-width:640px;margin:0 auto 32px}
+.hero .stats{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-bottom:40px}
+.hero .stat{text-align:center}
+.hero .stat .num{font-size:1.75rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .stat .label{font-size:.8125rem;color:var(--fg3);margin-top:2px}
+.hero .actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:8px;font-weight:600;font-size:.9375rem;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:0 4px 24px rgba(139,92,246,.3)}
+.btn-primary:hover{box-shadow:0 6px 32px rgba(139,92,246,.45);color:#fff}
+.btn-secondary{background:var(--bg3);color:var(--fg)}
+.btn-secondary:hover{background:#374151;color:var(--fg)}
+
+/* Install bar */
+.install{display:flex;justify-content:center;margin-top:32px}
+.install-bar{display:inline-flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 20px;font-family:var(--mono);font-size:.875rem;color:var(--fg2)}
+.install-bar .dollar{color:var(--fg3);user-select:none}
+.install-bar button{background:none;border:none;color:var(--fg3);cursor:pointer;padding:4px;transition:color .15s}
+.install-bar button:hover{color:var(--fg)}
+
+/* Code blocks */
+.code-section{background:var(--bg2)}
+.code-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
+@media(max-width:480px){.code-grid{grid-template-columns:1fr}}
+.code-card{background:var(--bg);border:1px solid rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
+.code-card .card-head{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:8px}
+.code-card .card-head .dot{width:8px;height:8px;border-radius:50%}
+.code-card .card-head .dot:nth-child(1){background:#EF4444}
+.code-card .card-head .dot:nth-child(2){background:#EAB308}
+.code-card .card-head .dot:nth-child(3){background:#22C55E}
+.code-card .card-head span:last-child{margin-left:8px;font-size:.75rem;color:var(--fg3);font-family:var(--mono)}
+pre{margin:0;padding:20px;overflow-x:auto;font-family:var(--mono);font-size:.8125rem;line-height:1.7;color:var(--fg2)}
+pre .kw{color:#C084FC}
+pre .fn{color:#60A5FA}
+pre .str{color:#34D399}
+pre .cmt{color:#6B7280}
+pre .type{color:#F472B6}
+pre .num{color:#FBBF24}
+
+/* Features */
+.features{background:var(--bg)}
+.section-head{text-align:center;margin-bottom:56px}
+.section-head h2{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;margin-bottom:12px}
+.section-head p{color:var(--fg2);max-width:560px;margin:0 auto;font-size:1.0625rem}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.feat{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:28px 24px;transition:border-color .2s}
+.feat:hover{border-color:rgba(139,92,246,.3)}
+.feat .icon{width:40px;height:40px;border-radius:10px;background:rgba(139,92,246,.12);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:1.25rem}
+.feat h3{font-size:1.0625rem;font-weight:600;margin-bottom:8px}
+.feat p{color:var(--fg3);font-size:.875rem;line-height:1.6}
+.feat code{background:rgba(139,92,246,.1);padding:2px 6px;border-radius:4px;font-size:.8125rem;font-family:var(--mono)}
+
+/* Benchmarks */
+.bench{background:var(--bg2)}
+.bench-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.875rem}
+.bench-table th,.bench-table td{text-align:left;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.bench-table th{color:var(--fg3);font-weight:500;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.bench-table td{color:var(--fg2)}
+.bench-table .highlight{color:var(--fg);font-weight:600}
+.bench-bar{display:flex;align-items:center;gap:12px}
+.bench-bar .bar{height:8px;border-radius:4px;background:var(--grad)}
+.bench-bar .val{font-size:.8125rem;font-weight:600;color:var(--fg);min-width:72px}
+.bench-note{margin-top:24px;padding:16px 20px;background:var(--bg);border-radius:8px;font-size:.8125rem;color:var(--fg3);border-left:3px solid var(--purple)}
+
+/* Models */
+.models{background:var(--bg)}
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.model-card{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:20px 16px;text-align:center;transition:border-color .2s}
+.model-card:hover{border-color:rgba(59,130,246,.3)}
+.model-card .name{font-weight:600;font-size:.9375rem;margin-bottom:4px}
+.model-card .status{font-size:.75rem;color:var(--fg3)}
+.model-card .status.prod{color:#34D399}
+
+/* Blog */
+.blog{background:var(--bg2)}
+.blog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.blog-card{display:block;background:var(--bg);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:28px 24px;transition:border-color .2s,transform .2s}
+.blog-card:hover{border-color:rgba(59,130,246,.3);transform:translateY(-2px)}
+.blog-card .tag{display:inline-block;font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:4px;background:rgba(139,92,246,.15);color:var(--purple);margin-bottom:12px}
+.blog-card h3{font-size:1rem;font-weight:600;margin-bottom:8px;color:var(--fg)}
+.blog-card p{color:var(--fg3);font-size:.8125rem;line-height:1.6}
+
+/* Ecosystem */
+.eco{background:var(--bg)}
+.eco-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.eco-card{display:block;background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:24px 20px;transition:border-color .2s}
+.eco-card:hover{border-color:rgba(6,182,212,.3)}
+.eco-card .mod{font-family:var(--mono);font-size:.8125rem;color:var(--cyan);margin-bottom:8px}
+.eco-card h3{font-size:.9375rem;font-weight:600;margin-bottom:6px;color:var(--fg)}
+.eco-card p{color:var(--fg3);font-size:.8125rem;line-height:1.5}
+
+/* Footer */
+footer{border-top:1px solid rgba(255,255,255,.06);padding:40px 0}
+footer .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+footer .left{display:flex;align-items:center;gap:8px;font-size:.8125rem;color:var(--fg3)}
+footer .left img{width:20px;height:20px;opacity:.5}
+footer .right{display:flex;gap:20px;font-size:.8125rem}
+footer .right a{color:var(--fg3)}
+footer .right a:hover{color:var(--fg)}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="wrap">
+    <a href="/" class="logo"><img src="zerfoo.svg" alt="Zerfoo">Zerfoo</a>
+    <button class="nav-toggle" onclick="document.querySelector('.links').classList.toggle('open')" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#benchmarks">Performance</a>
+      <a href="#models">Models</a>
+      <a href="#blog">Blog</a>
+      <a href="https://pkg.go.dev/github.com/zerfoo/zerfoo" target="_blank">Docs</a>
+      <a href="https://github.com/zerfoo/zerfoo" target="_blank" class="gh-btn">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="wrap">
+    <img src="zerfoo.svg" alt="Zerfoo" class="hero-logo">
+    <h1>ML inference for Go.<br><span class="grad">Pure Go. Zero CGo.</span></h1>
+    <p class="sub">Embed any GGUF model in your Go application. One import, one function call. GPU-accelerated at runtime, no C compiler needed.</p>
+    <div class="stats">
+      <div class="stat"><div class="num">245 tok/s</div><div class="label">Gemma 3 1B Q4_K_M</div></div>
+      <div class="stat"><div class="num">+20%</div><div class="label">faster than Ollama</div></div>
+      <div class="stat"><div class="num">99.5%</div><div class="label">CUDA graph coverage</div></div>
+      <div class="stat"><div class="num">0</div><div class="label">CGo calls</div></div>
+    </div>
+    <div class="actions">
+      <a href="#quickstart" class="btn btn-primary">Get Started</a>
+      <a href="https://github.com/zerfoo/zerfoo" target="_blank" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <div class="install">
+      <div class="install-bar">
+        <span class="dollar">$</span>
+        <span id="install-cmd">go get github.com/zerfoo/zerfoo</span>
+        <button onclick="navigator.clipboard.writeText('go get github.com/zerfoo/zerfoo')" title="Copy to clipboard">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Start -->
+<section id="quickstart" class="code-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Up and running in seconds</h2>
+      <p>Load a model from HuggingFace, generate text, stream tokens — all with idiomatic Go.</p>
+    </div>
+    <div class="code-grid">
+      <div class="code-card">
+        <div class="card-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>chat.go</span></div>
+<pre>m, _ := zerfoo.<span class="fn">Load</span>(<span class="str">"google/gemma-3-4b"</span>)
+<span class="kw">defer</span> m.<span class="fn">Close</span>()
+
+response, _ := m.<span class="fn">Chat</span>(<span class="str">"Explain Go interfaces in one sentence."</span>)
+fmt.<span class="fn">Println</span>(response)</pre>
+      </div>
+      <div class="code-card">
+        <div class="card-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>stream.go</span></div>
+<pre>m, _ := zerfoo.<span class="fn">Load</span>(<span class="str">"google/gemma-3-4b"</span>)
+<span class="kw">defer</span> m.<span class="fn">Close</span>()
+
+ch, _ := m.<span class="fn">ChatStream</span>(ctx, <span class="str">"Tell me a joke."</span>)
+<span class="kw">for</span> tok := <span class="kw">range</span> ch {
+    <span class="kw">if</span> !tok.Done {
+        fmt.<span class="fn">Print</span>(tok.Text)
+    }
+}</pre>
+      </div>
+      <div class="code-card">
+        <div class="card-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>embed.go</span></div>
+<pre>m, _ := zerfoo.<span class="fn">Load</span>(<span class="str">"google/gemma-3-4b"</span>)
+<span class="kw">defer</span> m.<span class="fn">Close</span>()
+
+vecs, _ := m.<span class="fn">Embed</span>([]<span class="type">string</span>{
+    <span class="str">"Go is statically typed."</span>,
+    <span class="str">"Rust has a borrow checker."</span>,
+})
+score := vecs[<span class="num">0</span>].<span class="fn">CosineSimilarity</span>(vecs[<span class="num">1</span>])
+fmt.<span class="fn">Printf</span>(<span class="str">"similarity: %.4f\n"</span>, score)</pre>
+      </div>
+      <div class="code-card">
+        <div class="card-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>structured.go</span></div>
+<pre>m, _ := zerfoo.<span class="fn">Load</span>(<span class="str">"google/gemma-3-4b"</span>)
+<span class="kw">defer</span> m.<span class="fn">Close</span>()
+
+schema := grammar.<span class="type">JSONSchema</span>{
+    Type: <span class="str">"object"</span>,
+    Properties: <span class="kw">map</span>[<span class="type">string</span>]*grammar.<span class="type">JSONSchema</span>{
+        <span class="str">"name"</span>: {Type: <span class="str">"string"</span>},
+        <span class="str">"age"</span>:  {Type: <span class="str">"number"</span>},
+    },
+}
+result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate a person named Alice."</span>,
+    zerfoo.<span class="fn">WithSchema</span>(schema))
+<span class="cmt">// {"name": "Alice", "age": 30}</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="features">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Built for production Go</h2>
+      <p>Everything you need to embed ML inference into your Go services.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="icon">&#9889;</div>
+        <h3>Zero CGo</h3>
+        <p><code>go build ./...</code> compiles everywhere. GPU acceleration is loaded dynamically at runtime via dlopen. No C compiler, no build tags, no CUDA toolkit at build time.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#128640;</div>
+        <h3>GPU Accelerated</h3>
+        <p>25+ custom CUDA kernels, CUDA graph capture covering 99.5% of decode instructions, and fused operations (RoPE, SwiGLU, AddRMSNorm, QKNormRoPE). ROCm and OpenCL backends available.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#128230;</div>
+        <h3>Embeddable Library</h3>
+        <p>Import <code>github.com/zerfoo/zerfoo</code> and call <code>model.Chat()</code>. No sidecar process, no HTTP boundary, no Python runtime. ML inference is a function call.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#127919;</div>
+        <h3>OpenAI-Compatible API</h3>
+        <p>Built-in HTTP server with <code>/v1/chat/completions</code>, SSE streaming, embeddings, Prometheus metrics, and health checks. Drop-in replacement for OpenAI clients.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#128270;</div>
+        <h3>Structured Output &amp; Tools</h3>
+        <p>Grammar-guided decoding constrains model output to valid JSON matching your schema. Tool calling with OpenAI-compatible function detection built in.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#129518;</div>
+        <h3>Type-Safe Generics</h3>
+        <p>Go 1.25 generics throughout — <code>tensor.Numeric</code> constraint for compile-time type safety across float32, float16, bfloat16, float8, and quantized types.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#128202;</div>
+        <h3>HuggingFace Integration</h3>
+        <p><code>zerfoo.Load("google/gemma-3-4b")</code> downloads and caches models automatically. Specify quantization variants with a <code>/Q8_0</code> suffix.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#128272;</div>
+        <h3>Production Ready</h3>
+        <p>TLS/mTLS, graceful shutdown, structured logging, Prometheus metrics, health checks, and distributed training via gRPC/NCCL. Built for real workloads.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#9881;&#65039;</div>
+        <h3>ARM NEON SIMD</h3>
+        <p>Hand-written ARM NEON and x86 AVX2 assembly for CPU-bound operations — GEMM, RMSNorm, RoPE, SiLU, softmax. Competitive CPU performance without a GPU.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Benchmarks -->
+<section id="benchmarks" class="bench">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Faster than Ollama</h2>
+      <p>Benchmarked on NVIDIA DGX Spark (GB10), CUDA 13.0, Go 1.25. Gemma 3 1B Q4_K_M, 256 tokens.</p>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="bench-table">
+        <thead>
+          <tr><th>Runtime</th><th>Throughput</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="highlight">Zerfoo</td>
+            <td>
+              <div class="bench-bar">
+                <div class="bar" style="width:min(245px,60vw)"></div>
+                <div class="val">245 tok/s</div>
+              </div>
+            </td>
+            <td>Pure Go, zero CGo, CUDA graph capture, fused kernels</td>
+          </tr>
+          <tr>
+            <td>Ollama</td>
+            <td>
+              <div class="bench-bar">
+                <div class="bar" style="width:min(204px,50vw);background:var(--bg3)"></div>
+                <div class="val">204 tok/s</div>
+              </div>
+            </td>
+            <td>llama.cpp C++ backend, same model, same hardware</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:40px">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:16px">Performance journey</h3>
+      <table class="bench-table">
+        <thead>
+          <tr><th>Date</th><th>Milestone</th><th>Tok/s</th><th>Improvement</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Mar 17</td><td class="highlight">dp4a INT8 + arena reuse</td><td class="highlight">245</td><td>+20% vs Ollama</td></tr>
+          <tr><td>Mar 17</td><td>Q4_0 re-quant restored</td><td>245</td><td>+32% vs regression</td></tr>
+          <tr><td>Mar 14</td><td>CUDA graph capture</td><td>234</td><td>+26% vs non-graph</td></tr>
+          <tr><td>Mar 13</td><td>GPU-first pipeline</td><td>103</td><td>D2H elimination</td></tr>
+          <tr><td>Mar 12</td><td>ARM NEON SIMD</td><td>8.15</td><td>+18.8% CPU accel</td></tr>
+          <tr><td>Mar 10</td><td>Initial CPU baseline</td><td>3.60</td><td>Starting point</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bench-note">
+      Hardware: NVIDIA DGX Spark GB10, sm_121, 128GB LPDDR5x. Methodology: 3 runs, 32-token warmup, median reported. Full details in <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/benchmarking-methodology.md" target="_blank">benchmarking-methodology.md</a>.
+    </div>
+  </div>
+</section>
+
+<!-- Models -->
+<section id="models" class="models">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Supported models</h2>
+      <p>Production-ready transformer architectures. Load any GGUF model from HuggingFace.</p>
+    </div>
+    <div class="model-grid">
+      <div class="model-card"><div class="name">Gemma 3</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">Llama 3</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">Qwen 2.5</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">Mistral</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">Phi 3/4</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">DeepSeek V3</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">SigLIP</div><div class="status">Vision encoder</div></div>
+      <div class="model-card"><div class="name">Kimi-VL</div><div class="status">Vision-language</div></div>
+    </div>
+    <div style="text-align:center;margin-top:32px">
+      <p style="color:var(--fg3);font-size:.875rem">Uses GGUF as the sole model format. Compatible with llama.cpp, Ollama, LM Studio, and GPT4All model files.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CLI -->
+<section class="code-section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>CLI included</h2>
+      <p>Pull models, run inference, and serve an OpenAI-compatible API from the command line.</p>
+    </div>
+    <div class="code-card" style="max-width:680px;margin:0 auto">
+      <div class="card-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>terminal</span></div>
+<pre><span class="cmt"># Install</span>
+$ go install github.com/zerfoo/zerfoo/cmd/zerfoo@latest
+
+<span class="cmt"># Pull a model from HuggingFace</span>
+$ zerfoo pull gemma-3-1b-q4
+
+<span class="cmt"># Interactive chat</span>
+$ zerfoo run gemma-3-1b-q4
+<span style="color:#6B7280">Model loaded. Type your message (Ctrl-D to quit).</span>
+> What is the capital of France?
+The capital of France is Paris.
+
+<span class="cmt"># OpenAI-compatible API server</span>
+$ zerfoo serve gemma-3-1b-q4 --port 8080
+
+<span class="cmt"># Query with any OpenAI client</span>
+$ curl <span class="str">http://localhost:8080/v1/chat/completions</span> \
+    -H <span class="str">"Content-Type: application/json"</span> \
+    -d <span class="str">'{"model":"gemma-3-1b-q4","messages":[{"role":"user","content":"Hello!"}]}'</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- Ecosystem -->
+<section class="eco">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>The Zerfoo ecosystem</h2>
+      <p>Six focused Go modules that compose together.</p>
+    </div>
+    <div class="eco-grid">
+      <a href="https://github.com/zerfoo/zerfoo" target="_blank" class="eco-card">
+        <div class="mod">github.com/zerfoo/zerfoo</div>
+        <h3>zerfoo</h3>
+        <p>Core ML framework: inference, training, serving, and the OpenAI-compatible API.</p>
+      </a>
+      <a href="https://github.com/zerfoo/ztensor" target="_blank" class="eco-card">
+        <div class="mod">github.com/zerfoo/ztensor</div>
+        <h3>ztensor</h3>
+        <p>GPU-accelerated tensor library, compute engine, computation graph, and CUDA kernels.</p>
+      </a>
+      <a href="https://github.com/zerfoo/ztoken" target="_blank" class="eco-card">
+        <div class="mod">github.com/zerfoo/ztoken</div>
+        <h3>ztoken</h3>
+        <p>BPE tokenizer with HuggingFace compatibility. Zero external dependencies.</p>
+      </a>
+      <a href="https://github.com/zerfoo/float16" target="_blank" class="eco-card">
+        <div class="mod">github.com/zerfoo/float16</div>
+        <h3>float16</h3>
+        <p>IEEE 754 half-precision (Float16) and BFloat16 arithmetic library.</p>
+      </a>
+      <a href="https://github.com/zerfoo/float8" target="_blank" class="eco-card">
+        <div class="mod">github.com/zerfoo/float8</div>
+        <h3>float8</h3>
+        <p>FP8 E4M3FN arithmetic for quantized inference workloads.</p>
+      </a>
+      <a href="https://github.com/zerfoo/zonnx" target="_blank" class="eco-card">
+        <div class="mod">github.com/zerfoo/zonnx</div>
+        <h3>zonnx</h3>
+        <p>ONNX-to-GGUF converter. Pure Go, CGo-free, standalone binary.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Blog -->
+<section id="blog" class="blog">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>From the blog</h2>
+      <p>Deep dives into the engineering behind Zerfoo.</p>
+    </div>
+    <div class="blog-grid">
+      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/blog/how-we-beat-ollama-cuda-graph-capture.md" target="_blank" class="blog-card">
+        <div class="tag">Performance</div>
+        <h3>How We Beat Ollama: CUDA Graph Capture in Pure Go</h3>
+        <p>CUDA graph capture and fused kernels took Zerfoo from 186 tok/s to 245 tok/s. A deep dive into making the decode path GPU-only.</p>
+      </a>
+      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/blog/zero-cgo-pure-go-ml-inference.md" target="_blank" class="blog-card">
+        <div class="tag">Architecture</div>
+        <h3>Zero CGo: Why We Chose Pure Go for ML Inference</h3>
+        <p>How Zerfoo runs GPU-accelerated inference without a single CGo call. dlopen, purego, and assembly trampolines.</p>
+      </a>
+      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/blog/gguf-industry-standard-format.md" target="_blank" class="blog-card">
+        <div class="tag">Design</div>
+        <h3>GGUF: Why We Standardized on the Industry Format</h3>
+        <p>From a custom protobuf format to GGUF — and deleting 7,500 lines of code in the process.</p>
+      </a>
+      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/blog/ml-inference-go-service-10-lines.md" target="_blank" class="blog-card">
+        <div class="tag">Tutorial</div>
+        <h3>Add ML Inference to Your Go Service in 10 Lines</h3>
+        <p>From zero to LLM inference without changing your build, deployment, or architecture.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:80px 0;text-align:center">
+  <div class="wrap">
+    <h2 style="font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;margin-bottom:16px">Ready to add ML to your Go app?</h2>
+    <p style="color:var(--fg2);max-width:480px;margin:0 auto 32px;font-size:1.0625rem">One import. One function call. No Python, no CGo, no sidecar.</p>
+    <div class="install">
+      <div class="install-bar">
+        <span class="dollar">$</span>
+        <span>go get github.com/zerfoo/zerfoo</span>
+      </div>
+    </div>
+    <div style="margin-top:24px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/getting-started.md" target="_blank" class="btn btn-primary">Getting Started Guide</a>
+      <a href="https://github.com/zerfoo/zerfoo" target="_blank" class="btn btn-secondary">View Source</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="wrap">
+    <div class="left">
+      <img src="zerfoo.svg" alt="">
+      Zerfoo — a product of <a href="https://feza.ai">Feza, Inc</a>. Apache 2.0 License.
+    </div>
+    <div class="right">
+      <a href="https://github.com/zerfoo" target="_blank">GitHub</a>
+      <a href="https://pkg.go.dev/github.com/zerfoo/zerfoo" target="_blank">Go Docs</a>
+      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/getting-started.md" target="_blank">Getting Started</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
