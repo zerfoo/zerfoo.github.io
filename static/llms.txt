@@ -1,0 +1,49 @@
+# Zerfoo
+
+> Production-grade ML inference and training framework for Go. Zero CGo. 245 tok/s on Gemma 3 1B.
+
+Zerfoo is a pure Go ML framework that lets you embed inference, training, and serving directly into Go applications. No Python, no CGo, no sidecar processes. GPU acceleration via CUDA, ROCm, and OpenCL is loaded dynamically at runtime using purego/dlopen.
+
+## Key Facts
+
+- Language: Go (1.25+), zero CGo by default
+- Model format: GGUF (llama.cpp compatible)
+- Performance: 245 tok/s decode on Gemma 3 1B Q4_K_M (20% faster than Ollama)
+- Architectures: 20 LLM architectures (Llama 3/4, Gemma 3, Mistral, Qwen 2, Phi 3/4, DeepSeek V3, Mamba, etc.)
+- Tabular ML: FTTransformer, TabNet, SAINT, TabResNet, Ensemble
+- Time-series: TFT, N-BEATS, PatchTST
+- GPU backends: CUDA (cuBLAS, custom kernels), ROCm (HIP, rocBLAS), OpenCL (CLBlast)
+- API: OpenAI-compatible HTTP server with streaming, tool calling, structured output
+- License: Apache 2.0
+- Org: github.com/zerfoo
+
+## Docs
+
+- [Getting Started](https://zerfoo.feza.ai/docs/getting-started/installation/)
+- [Quick Start](https://zerfoo.feza.ai/docs/getting-started/quickstart/)
+- [First Inference](https://zerfoo.feza.ai/docs/getting-started/first-inference/)
+- [API: Generate](https://zerfoo.feza.ai/docs/api/generate/)
+- [API: Inference](https://zerfoo.feza.ai/docs/api/inference/)
+- [API: Serve](https://zerfoo.feza.ai/docs/api/serve/)
+- [Tutorials](https://zerfoo.feza.ai/docs/tutorials/)
+- [Cookbooks](https://zerfoo.feza.ai/docs/cookbooks/)
+- [Architecture](https://zerfoo.feza.ai/docs/architecture/overview/)
+- [GPU Setup](https://zerfoo.feza.ai/docs/architecture/gpu-setup/)
+- [Benchmarks](https://zerfoo.feza.ai/docs/reference/benchmarks/)
+- [Ecosystem](https://zerfoo.feza.ai/docs/ecosystem/)
+- [zonnx Converter](https://zerfoo.feza.ai/docs/zonnx/overview/)
+- [Contributing](https://zerfoo.feza.ai/docs/contributing/)
+
+## Ecosystem
+
+- [ztensor](https://github.com/zerfoo/ztensor) - GPU-accelerated tensor, compute engine, and computation graph library
+- [ztoken](https://github.com/zerfoo/ztoken) - BPE tokenizer with HuggingFace compatibility
+- [float16](https://github.com/zerfoo/float16) - IEEE 754 Float16 and BFloat16 arithmetic
+- [float8](https://github.com/zerfoo/float8) - FP8 E4M3FN arithmetic for quantized inference
+- [zonnx](https://github.com/zerfoo/zonnx) - ONNX/SafeTensors to GGUF converter
+
+## Optional
+
+- [Full docs for LLMs](https://zerfoo.feza.ai/llms-full.txt)
+- [Go Reference](https://pkg.go.dev/github.com/zerfoo/zerfoo)
+- [GitHub](https://github.com/zerfoo/zerfoo)

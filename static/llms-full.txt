@@ -1,0 +1,5953 @@
+# Zerfoo
+
+> Production-grade ML inference and training framework for Go. Zero CGo. 245 tok/s on Gemma 3 1B.
+
+Zerfoo is a pure Go ML framework that lets you embed inference, training, and serving directly into Go applications. No Python, no CGo, no sidecar processes. GPU acceleration via CUDA, ROCm, and OpenCL is loaded dynamically at runtime using purego/dlopen.
+
+## Key Facts
+
+- Language: Go (1.25+), zero CGo by default
+- Model format: GGUF (llama.cpp compatible)
+- Performance: 245 tok/s decode on Gemma 3 1B Q4_K_M (20% faster than Ollama)
+- Architectures: 20 LLM architectures (Llama 3/4, Gemma 3, Mistral, Qwen 2, Phi 3/4, DeepSeek V3, Mamba, etc.)
+- Tabular ML: FTTransformer, TabNet, SAINT, TabResNet, Ensemble
+- Time-series: TFT, N-BEATS, PatchTST
+- GPU backends: CUDA (cuBLAS, custom kernels), ROCm (HIP, rocBLAS), OpenCL (CLBlast)
+- API: OpenAI-compatible HTTP server with streaming, tool calling, structured output
+- License: Apache 2.0
+- Org: github.com/zerfoo
+
+## Docs
+
+- [Getting Started](https://zerfoo.feza.ai/docs/getting-started/installation/)
+- [Quick Start](https://zerfoo.feza.ai/docs/getting-started/quickstart/)
+- [First Inference](https://zerfoo.feza.ai/docs/getting-started/first-inference/)
+- [API: Generate](https://zerfoo.feza.ai/docs/api/generate/)
+- [API: Inference](https://zerfoo.feza.ai/docs/api/inference/)
+- [API: Serve](https://zerfoo.feza.ai/docs/api/serve/)
+- [Tutorials](https://zerfoo.feza.ai/docs/tutorials/)
+- [Cookbooks](https://zerfoo.feza.ai/docs/cookbooks/)
+- [Architecture](https://zerfoo.feza.ai/docs/architecture/overview/)
+- [GPU Setup](https://zerfoo.feza.ai/docs/architecture/gpu-setup/)
+- [Benchmarks](https://zerfoo.feza.ai/docs/reference/benchmarks/)
+- [Ecosystem](https://zerfoo.feza.ai/docs/ecosystem/)
+- [zonnx Converter](https://zerfoo.feza.ai/docs/zonnx/overview/)
+- [Contributing](https://zerfoo.feza.ai/docs/contributing/)
+
+## Ecosystem
+
+- [ztensor](https://github.com/zerfoo/ztensor) - GPU-accelerated tensor, compute engine, and computation graph library
+- [ztoken](https://github.com/zerfoo/ztoken) - BPE tokenizer with HuggingFace compatibility
+- [float16](https://github.com/zerfoo/float16) - IEEE 754 Float16 and BFloat16 arithmetic
+- [float8](https://github.com/zerfoo/float8) - FP8 E4M3FN arithmetic for quantized inference
+- [zonnx](https://github.com/zerfoo/zonnx) - ONNX/SafeTensors to GGUF converter
+
+## Optional
+
+- [Full docs for LLMs](https://zerfoo.feza.ai/llms-full.txt)
+- [Go Reference](https://pkg.go.dev/github.com/zerfoo/zerfoo)
+- [GitHub](https://github.com/zerfoo/zerfoo)
+
+---
+
+# Full Documentation
+
+
+## Your First Inference
+Source: getting-started/first-inference
+
+
+# Your First Inference
+
+Go from zero to working LLM inference in under 5 minutes.
+
+## Prerequisites
+
+- **Go 1.25 or later** -- [download Go](https://go.dev/dl/)
+- A machine with at least 4 GB of RAM (8 GB recommended for 7B models)
+- Optional: an NVIDIA GPU with CUDA drivers for hardware-accelerated inference
+
+Verify your Go installation:
+
+```bash
+go version
+# go version go1.25.0 linux/amd64
+```
+
+## Install the CLI
+
+```bash
+go install github.com/zerfoo/zerfoo/cmd/zerfoo@latest
+```
+
+Verify:
+
+```bash
+zerfoo version
+```
+
+Zerfoo builds with zero CGo by default. GPU acceleration is loaded dynamically at runtime, so you do not need CUDA headers or build tags to compile.
+
+## Download a Model
+
+Zerfoo uses the GGUF model format -- the same format used by llama.cpp. Pull a small quantized model to get started:
+
+```bash
+zerfoo pull gemma-3-1b-q4
+```
+
+This downloads the GGUF file to `~/.cache/zerfoo`. You can also pull by full HuggingFace repo ID:
+
+```bash
+zerfoo pull meta-llama/Llama-3.2-1B-Instruct-GGUF
+```
+
+Manage cached models:
+
+```bash
+zerfoo list          # show cached models
+zerfoo rm gemma-3-1b-q4  # remove a model
+```
+
+### Model aliases
+
+Zerfoo ships with built-in aliases for popular models:
+
+| Alias | HuggingFace Repo |
+|-------|-----------------|
+| `gemma-3-1b-q4` | `google/gemma-3-1b-it-qat-q4_0-gguf` |
+| `llama-3-1b-q4` | `meta-llama/Llama-3.2-1B-Instruct-GGUF` |
+| `llama-3-8b-q4` | `meta-llama/Llama-3.1-8B-Instruct-GGUF` |
+| `mistral-7b-q4` | `mistralai/Mistral-7B-Instruct-v0.3-GGUF` |
+| `qwen-2.5-7b-q4` | `Qwen/Qwen2.5-7B-Instruct-GGUF` |
+
+You can also pass any HuggingFace repo ID directly, or a local file path.
+
+## CLI Usage
+
+### Interactive chat
+
+Start a chat session with `zerfoo run`:
+
+```bash
+zerfoo run gemma-3-1b-q4
+```
+
+```
+Model loaded. Type your message (Ctrl-D to quit).
+
+> What is the capital of France?
+The capital of France is Paris.
+>
+```
+
+### Single prompt
+
+Run a one-off prompt with `predict`:
+
+```bash
+zerfoo predict --model gemma-3-1b-q4 --prompt "Explain what a tensor is in one paragraph."
+```
+
+### Sampling parameters
+
+Both `run` and `predict` accept these flags:
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--temperature` | Sampling temperature | 1.0 |
+| `--top-k` | Top-K sampling | disabled |
+| `--top-p` | Nucleus sampling | 1.0 |
+| `--repetition-penalty` | Penalize repeated tokens | 1.0 |
+| `--max-tokens` | Maximum tokens to generate | 256 |
+| `--system` | System prompt | none |
+| `--device` | Device (`cpu`, `cuda`) | `cpu` |
+
+Example:
+
+```bash
+zerfoo predict \
+  --model gemma-3-1b-q4 \
+  --prompt "Write a haiku about Go." \
+  --temperature 0.7 \
+  --max-tokens 64
+```
+
+## Inference from Go Code
+
+Zerfoo is designed to be embedded as a library. Create a new Go project:
+
+```bash
+mkdir my-llm-app && cd my-llm-app
+go mod init my-llm-app
+go get github.com/zerfoo/zerfoo@latest
+```
+
+Write `main.go`:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/zerfoo/zerfoo/inference"
+)
+
+func main() {
+	// Load a quantized Gemma 3 1B model.
+	// On first run, Zerfoo pulls the GGUF file from HuggingFace and caches it.
+	mdl, err := inference.Load("gemma-3-1b-q4")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer mdl.Close()
+
+	// Generate text from a prompt.
+	result, err := mdl.Generate(
+		context.Background(),
+		"Explain what a tensor is in one paragraph.",
+		inference.WithMaxTokens(128),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(result)
+}
+```
+
+Run it:
+
+```bash
+go run main.go
+```
+
+### Chat completion
+
+For multi-turn conversations, use the `Chat` method:
+
+```go
+resp, err := mdl.Chat(context.Background(), []inference.Message{
+	{Role: "system", Content: "You are a helpful assistant."},
+	{Role: "user", Content: "What is the capital of France?"},
+},
+	inference.WithTemperature(0.5),
+	inference.WithMaxTokens(64),
+)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(resp.Content)
+fmt.Printf("Tokens used: %d (prompt: %d, completion: %d)\n",
+	resp.TokensUsed, resp.PromptTokens, resp.CompletionTokens)
+```
+
+### GPU acceleration
+
+Pass `WithDevice` to run on a CUDA GPU:
+
+```go
+mdl, err := inference.LoadFile("model.gguf",
+	inference.WithDevice("cuda"),
+)
+```
+
+Or from the CLI:
+
+
+---
+
+
+## Installation
+Source: getting-started/installation
+
+
+# Installation
+
+Zerfoo requires **Go 1.25 or later**. [Download Go](https://go.dev/dl/) if you haven't already.
+
+Verify your Go installation:
+
+```bash
+go version
+# go version go1.25.0 linux/amd64
+```
+
+## As a Library
+
+Add Zerfoo to your Go module:
+
+```bash
+go get github.com/zerfoo/zerfoo@latest
+```
+
+Then import it in your code:
+
+```go
+import "github.com/zerfoo/zerfoo"
+```
+
+For just tensors and GPU compute, import `github.com/zerfoo/ztensor`. For just tokenization, import `github.com/zerfoo/ztoken`.
+
+## CLI
+
+Install the `zerfoo` command-line tool:
+
+```bash
+go install github.com/zerfoo/zerfoo/cmd/zerfoo@latest
+```
+
+This places the `zerfoo` binary in your `$GOPATH/bin` (or `$HOME/go/bin` by default). Make sure this directory is in your `PATH`.
+
+## Build from Source
+
+```bash
+git clone https://github.com/zerfoo/zerfoo.git
+cd zerfoo
+go build -o zerfoo ./cmd/zerfoo
+```
+
+Zerfoo builds with **zero CGo by default** (`CGO_ENABLED=0`). GPU acceleration is loaded dynamically at runtime via purego/dlopen, so you do not need CUDA headers, shared libraries, or build tags to compile. A plain `go build` produces a fully static binary.
+
+## Platform Support
+
+Zerfoo compiles on any platform supported by Go 1.25, including **Linux**, **macOS**, and **Windows**.
+
+GPU acceleration is available on:
+
+| Backend | Hardware | Platforms |
+|---------|----------|-----------|
+| CUDA | NVIDIA GPUs | Linux, Windows |
+| ROCm | AMD GPUs | Linux |
+| OpenCL | Cross-vendor | Linux, macOS |
+
+For GPU setup instructions, see [GPU Setup](/docs/architecture/gpu-setup/).
+
+## Verify Installation
+
+### Library
+
+Create a test file to confirm the library is importable:
+
+```bash
+mkdir zerfoo-test && cd zerfoo-test
+go mod init zerfoo-test
+go get github.com/zerfoo/zerfoo@latest
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/zerfoo/zerfoo"
+)
+
+func main() {
+	fmt.Println("zerfoo imported successfully")
+	_ = zerfoo.Load
+}
+```
+
+```bash
+go run main.go
+# zerfoo imported successfully
+```
+
+### CLI
+
+```bash
+zerfoo version
+```
+
+This prints the installed version. If the command is not found, ensure `$GOPATH/bin` is in your `PATH`:
+
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+## Next Steps
+
+- [Quickstart](/docs/getting-started/quickstart/) -- pull a model and run your first inference
+- [GPU Setup](/docs/architecture/gpu-setup/) -- configure CUDA, ROCm, or OpenCL for hardware-accelerated inference
+
+---
+
+
+## Quick Start
+Source: getting-started/quickstart
+
+
+# Quick Start
+
+Run your first LLM inference in under 5 minutes.
+
+## Load a Model and Generate Text
+
+Create a new Go project and add Zerfoo:
+
+```bash
+mkdir my-llm-app && cd my-llm-app
+go mod init my-llm-app
+go get github.com/zerfoo/zerfoo@latest
+```
+
+Write `main.go`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/zerfoo/zerfoo"
+)
+
+func main() {
+	m, err := zerfoo.Load("google/gemma-3-4b")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer m.Close()
+
+	reply, err := m.Chat("Explain quicksort in one sentence.")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(reply)
+}
+```
+
+Run it:
+
+```bash
+go run main.go
+```
+
+`zerfoo.Load` accepts a HuggingFace model ID (e.g. `"google/gemma-3-4b"`) or a local GGUF file path (e.g. `"./model.gguf"`). If the model is not cached locally it is downloaded automatically. The default quantization is Q4_K_M.
+
+To request a specific quantization, append it to the ID:
+
+```
+google/gemma-3-4b/Q8_0
+```
+
+## Chat Completion
+
+For multi-turn conversations, use the `Chat` method with structured messages:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/zerfoo/zerfoo/inference"
+)
+
+func main() {
+	mdl, err := inference.Load("gemma-3-1b-q4")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer mdl.Close()
+
+	resp, err := mdl.Chat(context.Background(), []inference.Message{
+		{Role: "system", Content: "You are a helpful assistant."},
+		{Role: "user", Content: "What is the capital of France?"},
+	},
+		inference.WithTemperature(0.5),
+		inference.WithMaxTokens(64),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(resp.Content)
+	fmt.Printf("Tokens used: %d (prompt: %d, completion: %d)\n",
+		resp.TokensUsed, resp.PromptTokens, resp.CompletionTokens)
+}
+```
+
+The `Chat` method formats messages using the model's built-in chat template and returns a `Response` with token usage statistics.
+
+**CLI equivalent:**
+
+```bash
+zerfoo run gemma-3-1b-q4
+```
+
+This starts an interactive chat session:
+
+```
+Model loaded. Type your message (Ctrl-D to quit).
+
+> What is the capital of France?
+The capital of France is Paris.
+>
+```
+
+## Stream Responses
+
+Print tokens as they arrive:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/zerfoo/zerfoo"
+)
+
+func main() {
+	m, err := zerfoo.Load("google/gemma-3-4b")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer m.Close()
+
+	stream, err := m.ChatStream(context.Background(), "Write a haiku about Go.")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for tok := range stream {
+		if tok.Done {
+			break
+		}
+		fmt.Print(tok.Text)
+	}
+	fmt.Println()
+}
+```
+
+For lower-level control, use the `inference` package directly:
+
+```go
+err = mdl.GenerateStream(ctx, "Tell me a joke.",
+	generate.TokenStreamFunc(func(token string, done bool) error {
+		if !done {
+			fmt.Print(token)
+		}
+		return nil
+	}),
+	inference.WithMaxTokens(128),
+)
+```
+
+**CLI equivalent:**
+
+```bash
+zerfoo predict --model gemma-3-1b-q4 --prompt "Write a haiku about Go."
+```
+
+## Generate Embeddings
+
+Use the OpenAI-compatible API server to generate text embeddings. Start the server:
+
+```bash
+zerfoo serve gemma-3-1b-q4 --port 8080
+```
+
+Then request embeddings:
+
+```bash
+curl http://localhost:8080/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3-1b-q4",
+    "input": "Zerfoo is an ML framework for Go."
+  }'
+```
+
+Any OpenAI-compatible client library works -- just point it at your server:
+
+```go
+// Using the standard net/http package
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+)
+
+---
+
+
+## API Server
+Source: tutorials/api-server
+
+
+# Running the OpenAI-Compatible API Server
+
+This tutorial shows how to serve a model over HTTP using the Zerfoo API server, which implements the OpenAI API specification. Any client library or tool that works with the OpenAI API can connect to Zerfoo with a one-line base URL change.
+
+## Starting the Server
+
+The simplest way to start serving is with the `serve` CLI command:
+
+```bash
+zerfoo serve gemma-3-1b-q4
+```
+
+This downloads the model (if not already cached), loads it, and starts an HTTP server on `localhost:8080`. You can customize the host and port:
+
+```bash
+zerfoo serve gemma-3-1b-q4 --host 0.0.0.0 --port 3000
+```
+
+For GPU inference:
+
+```bash
+zerfoo serve gemma-3-1b-q4 --device cuda
+```
+
+## Available Endpoints
+
+The server exposes these OpenAI-compatible endpoints:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/v1/chat/completions` | Chat completion (multi-turn conversation) |
+| POST | `/v1/completions` | Text completion (single prompt) |
+| POST | `/v1/embeddings` | Text embeddings |
+| POST | `/v1/audio/transcriptions` | Audio transcription (when a transcriber is configured) |
+| GET | `/v1/models` | List loaded models |
+| GET | `/v1/models/{id}` | Get model information |
+| DELETE | `/v1/models/{id}` | Unload a model |
+| GET | `/metrics` | Prometheus metrics |
+| GET | `/openapi.yaml` | OpenAPI specification |
+
+## Making Requests with curl
+
+### Chat Completion
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3-1b-q4",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "What is the capital of France?"}
+    ],
+    "temperature": 0.7,
+    "max_tokens": 64
+  }'
+```
+
+### Streaming
+
+Add `"stream": true` to receive server-sent events (SSE) as tokens are generated:
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3-1b-q4",
+    "messages": [
+      {"role": "user", "content": "Write a poem about Go."}
+    ],
+    "stream": true,
+    "max_tokens": 128
+  }'
+```
+
+Each SSE event contains a JSON chunk with the delta token. The stream ends with `data: [DONE]`.
+
+### Text Completion
+
+```bash
+curl http://localhost:8080/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3-1b-q4",
+    "prompt": "The Go programming language is",
+    "max_tokens": 64,
+    "temperature": 0.5
+  }'
+```
+
+### List Models
+
+```bash
+curl http://localhost:8080/v1/models
+```
+
+## Using with the OpenAI Python Client
+
+Any OpenAI-compatible client library works. Here is an example with the official Python client:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8080/v1",
+    api_key="not-needed",  # Zerfoo does not require an API key by default
+)
+
+response = client.chat.completions.create(
+    model="gemma-3-1b-q4",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Explain transformers in ML."},
+    ],
+    temperature=0.7,
+    max_tokens=256,
+)
+
+print(response.choices[0].message.content)
+```
+
+For streaming:
+
+```python
+stream = client.chat.completions.create(
+    model="gemma-3-1b-q4",
+    messages=[{"role": "user", "content": "Write a haiku."}],
+    stream=True,
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="")
+```
+
+## Starting the Server from Go Code
+
+You can embed the server directly in your Go application:
+
+```go
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/zerfoo/zerfoo/inference"
+	"github.com/zerfoo/zerfoo/serve"
+)
+
+func main() {
+	model, err := inference.LoadFile("gemma-3-1b-it-q4_0.gguf",
+		inference.WithDevice("cuda"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer model.Close()
+
+	srv := serve.NewServer(model)
+
+	log.Println("Listening on :8080")
+	log.Fatal(http.ListenAndServe(":8080", srv.Handler()))
+}
+```
+
+### Server Options
+
+The `serve.NewServer` function accepts options for logging, metrics, batch scheduling, speculative decoding, and multi-GPU distribution:
+
+```go
+srv := serve.NewServer(model,
+	serve.WithLogger(logger),
+	serve.WithMetrics(metricsCollector),
+	serve.WithBatchScheduler(batchScheduler),
+	serve.WithDraftModel(draftModel),
+	serve.WithGPUs([]int{0, 1}),
+)
+```
+
+**Speculative decoding**: When a draft model is set with `WithDraftModel`, the server uses speculative decoding for all completion requests. A smaller, faster model proposes tokens and the target model verifies them in a single batched forward pass, improving decode throughput.
+
+**Batch scheduling**: When a `BatchScheduler` is attached with `WithBatchScheduler`, incoming non-streaming requests are grouped into batches for higher throughput under load.
+
+## Prometheus Metrics
+
+The server exposes a `/metrics` endpoint in Prometheus format. Key metrics include:
+
+- Request count and latency per endpoint
+- Token generation rate (tokens per second)
+- Speculative decoding acceptance rate (when enabled)
+
+Point your Prometheus scrape config at `http://localhost:8080/metrics` to collect these metrics.
+
+## Monitoring and Health
+
+The `/v1/models` endpoint serves as a lightweight health check. If the model is loaded and ready, it returns model metadata. After a `DELETE /v1/models/{id}` call, the model is unloaded and subsequent inference requests return an error.
+
+The server includes built-in recovery middleware that catches panics during request handling and returns a 500 response instead of crashing the process.
+
+---
+
+
+## Model Loading
+Source: tutorials/model-loading
+
+
+# Model Loading and Architecture Support
+
+This tutorial covers the GGUF model format, the architectures Zerfoo supports, how to load models programmatically with various options, and what quantization levels mean for memory and quality.
+
+## The GGUF Format
+
+GGUF (GPT-Generated Unified Format) is a single-file model format designed for efficient inference. A GGUF file contains everything needed to run a model:
+
+- **Metadata**: architecture name, vocabulary size, hidden dimensions, RoPE parameters, chat template, and more.
+- **Tokenizer**: the full BPE vocabulary and merge rules embedded in the file's metadata section.
+- **Tensors**: all model weights, stored in their quantized or full-precision representation with shape information.
+
+Zerfoo uses GGUF as its sole model format. When you call `inference.LoadFile`, the framework parses the GGUF header, extracts the tokenizer, reads the architecture metadata, and builds a typed computation graph -- all without any external config files.
+
+```go
+model, err := inference.LoadFile("path/to/model.gguf")
+```
+
+GGUF files are mmap-friendly. On Unix platforms, you can enable memory-mapped loading to avoid copying weights into the Go heap:
+
+```go
+model, err := inference.LoadFile("model.gguf",
+	inference.WithMmap(true),
+)
+```
+
+## Supported Architectures
+
+Zerfoo includes architecture-specific graph builders for each model family. The architecture is detected automatically from GGUF metadata -- you do not need to specify it.
+
+| Architecture | Key Features | Example Models |
+|-------------|-------------|----------------|
+| Llama 3 | RoPE theta=500K, GQA | Llama 3.2 1B/3B, Llama 3.1 8B/70B |
+| Llama 4 | Extended Llama architecture | Llama 4 Scout |
+| Gemma 3 | Tied embeddings, embedding scaling, QK norms, logit softcap | Gemma 3 1B/4B/12B/27B |
+| Gemma 3n | Gemma 3 nano variant | Gemma 3n |
+| Mistral | Sliding window attention | Mistral 7B v0.3 |
+| Mixtral | Mixture of experts (MoE) with sliding window | Mixtral 8x7B |
+| Qwen 2 | Attention bias, RoPE theta=1M | Qwen 2.5 7B/14B/72B |
+| Phi 3/4 | Partial rotary factor | Phi-3 Mini, Phi-4 |
+| DeepSeek V3 | Multi-head Latent Attention (MLA), batched MoE | DeepSeek V3 |
+| Falcon | Multi-query attention | Falcon 7B/40B |
+| Command-R | Retrieval-augmented generation architecture | Command-R |
+| Jamba | Hybrid Mamba-Transformer architecture | Jamba |
+| Mamba/Mamba3 | State-space model (SSM), no attention | Mamba |
+| LLaVA | Vision-language multimodal | LLaVA |
+
+Each architecture has a dedicated builder in the `inference/` package (e.g., `arch_llama.go`, `arch_gemma.go`, `arch_deepseek.go`). The builder reads architecture-specific metadata fields and constructs the computation graph with the correct layer structure, attention mechanism, and normalization.
+
+## Loading Models Programmatically
+
+The `inference.LoadFile` function accepts functional options that control device placement, precision, and sequence length.
+
+### Device Selection
+
+```go
+// CPU inference (default).
+model, err := inference.LoadFile("model.gguf")
+
+// CUDA GPU inference.
+model, err := inference.LoadFile("model.gguf",
+	inference.WithDevice("cuda"),
+)
+```
+
+### Compute Precision
+
+```go
+// FP16 compute -- activations are converted F32->FP16 before GPU kernels.
+model, err := inference.LoadFile("model.gguf",
+	inference.WithDevice("cuda"),
+	inference.WithDType("fp16"),
+)
+
+// FP8 quantization -- weights are quantized to FP8 E4M3 at load time.
+model, err := inference.LoadFile("model.gguf",
+	inference.WithDevice("cuda"),
+	inference.WithDType("fp8"),
+)
+```
+
+### Sequence Length
+
+Override the model's default maximum context length:
+
+```go
+model, err := inference.LoadFile("model.gguf",
+	inference.WithMaxSeqLen(4096),
+)
+```
+
+### TensorRT Backend
+
+For maximum throughput on NVIDIA GPUs, enable the TensorRT backend:
+
+```go
+model, err := inference.LoadFile("model.gguf",
+	inference.WithDevice("cuda"),
+	inference.WithBackend("tensorrt"),
+	inference.WithPrecision("fp16"),
+)
+```
+
+### Model Aliases
+
+Zerfoo maintains a table of short aliases for popular HuggingFace repositories. You can resolve an alias to its full repo ID or register your own:
+
+```go
+// Resolves "gemma-3-1b-q4" -> "google/gemma-3-1b-it-qat-q4_0-gguf"
+repoID := inference.ResolveAlias("gemma-3-1b-q4")
+
+// Register a custom alias.
+inference.RegisterAlias("my-model", "myorg/my-model-GGUF")
+```
+
+## Understanding Quantization
+
+Quantization reduces model weights from 16- or 32-bit floats to lower-precision integers, trading a small amount of quality for significant memory savings and faster inference.
+
+Common GGUF quantization types:
+
+| Type | Bits/Weight | Memory (7B model) | Quality | Use Case |
+|------|------------|-------------------|---------|----------|
+| F16 | 16 | ~14 GB | Baseline | Full quality, GPU with ample VRAM |
+| Q8_0 | 8 | ~7 GB | Near-lossless | Best quality-to-size ratio |
+| Q4_K_M | ~4.5 | ~4 GB | Good | Recommended default for most users |
+| Q4_0 | 4 | ~3.5 GB | Acceptable | Minimum viable quality |
+
+The quantization type is baked into the GGUF file at conversion time. Zerfoo reads the quantization metadata from each tensor and applies the correct dequantization during inference. You do not need to specify the quantization type at load time.
+
+For a 1B parameter model like Gemma 3 1B with Q4_K_M quantization, expect roughly 800 MB of memory usage -- small enough to run on a laptop CPU.
+
+## Inspecting Model Metadata
+
+After loading a model, you can access its metadata:
+
+```go
+model, err := inference.LoadFile("model.gguf")
+if err != nil {
+	log.Fatal(err)
+}
+defer model.Close()
+
+info := model.Info()
+fmt.Printf("Architecture: %s\n", info.Architecture)
+fmt.Printf("Parameters: %d\n", info.Parameters)
+```
+
+## Next Steps
+
+- [Text Generation Deep Dive](/docs/tutorials/text-generation/) -- sampling strategies, streaming, and performance tuning.
+- [Running the OpenAI-Compatible API Server](/docs/api/) -- serve models over HTTP.
+
+---
+
+
+## Tabular and Time-Series
+Source: tutorials/tabular-timeseries
+
+
+# Tabular and Time-Series ML
+
+This tutorial covers Zerfoo's built-in models for structured data prediction and time-series forecasting. These packages let you train and run inference on tabular datasets and temporal data entirely in Go, using the same tensor and compute infrastructure that powers Zerfoo's language model inference.
+
+## Tabular ML Overview
+
+The `tabular` package provides neural network architectures for structured (tabular) data classification. It currently supports four architectures, each offering different trade-offs between simplicity and expressiveness:
+
+| Architecture | Type | Key Idea |
+|-------------|------|----------|
+| `Model` (MLP) | Feedforward | Configurable multi-layer perceptron baseline |
+| `FTTransformer` | Transformer | Feature Tokenizer + Transformer; each feature becomes a token |
+| `TabNet` | Attention-based | Sequential attention for feature selection with sparsemax |
+| `SAINT` | Transformer | Self-Attention and Intersample Attention across samples |
+| `TabResNet` | Residual MLP | MLP with skip connections between hidden layers |
+
+All models output predictions for 3 classes and are built on `ztensor` tensors and `compute.Engine[float32]`.
+
+## Training a Tabular Model
+
+The `tabular.Train` function handles the full training loop: data splitting, model initialization, AdamW optimization, and cross-entropy loss computation.
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/zerfoo/ztensor/compute"
+	"github.com/zerfoo/ztensor/numeric"
+	"github.com/zerfoo/zerfoo/tabular"
+)
+
+func main() {
+	// Prepare your data: each row is a feature vector, each label is 0, 1, or 2.
+	data := [][]float64{
+		{0.5, 1.2, -0.3, 0.8},
+		{1.1, -0.4, 0.7, 1.5},
+		{-0.2, 0.9, 1.1, -0.6},
+		// ... more rows
+	}
+	labels := []int{0, 1, 2} // 0=Long, 1=Short, 2=Flat
+
+	eng := compute.NewCPUEngine[float32]()
+	ops := numeric.Float32Arithmetic{}
+
+	model, err := tabular.Train(data, labels,
+		tabular.TrainConfig{
+			Epochs:          100,
+			BatchSize:       32,
+			LearningRate:    0.001,
+			WeightDecay:     1e-4,
+			ValidationSplit: 0.2,
+		},
+		tabular.ModelConfig{
+			HiddenDims:  []int{64, 32},
+			DropoutRate:  0.1,
+			Activation:   tabular.ActivationGELU,
+		},
+		eng, ops,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Training complete")
+	_ = model // Use model.Predict for inference
+}
+```
+
+## Using FTTransformer
+
+The FTTransformer (Feature Tokenizer + Transformer) treats each numeric feature as a learned token embedding, prepends a CLS token, and processes the sequence through transformer encoder layers. It is particularly effective when features have complex interactions.
+
+```go
+ft, err := tabular.NewFTTransformer(tabular.FTTransformerConfig{
+	NumFeatures: 10,
+	DToken:      32,
+	NHeads:      4,
+	NLayers:     3,
+	DFFN:        64,
+	DropoutRate: 0.1,
+}, eng, ops)
+if err != nil {
+	log.Fatal(err)
+}
+
+// Run inference on a feature vector.
+ctx := context.Background()
+prediction, err := ft.Predict(ctx, featureVector)
+```
+
+## Using TabNet
+
+TabNet uses sequential attention to select which features to focus on at each decision step. It provides built-in feature importance through its attention masks.
+
+```go
+tn, err := tabular.NewTabNet(tabular.TabNetConfig{
+	InputDim:              10,
+	OutputDim:             3,
+	NSteps:                5,
+	RelaxationFactor:      1.5,
+	SparsityCoefficient:   1e-3,
+	FeatureTransformerDim: 64,
+}, eng, ops)
+```
+
+## Using SAINT
+
+SAINT (Self-Attention and Intersample Attention) extends the transformer approach by adding attention across samples in a batch, not just across features within a single sample. This can capture relationships between data points.
+
+```go
+saint, err := tabular.NewSAINT(tabular.SAINTConfig{
+	NumFeatures:          10,
+	DModel:               32,
+	NHeads:               4,
+	NLayers:              3,
+	InterSampleAttention: true,
+}, eng, ops)
+```
+
+## Using TabResNet
+
+TabResNet is a simple but strong baseline: an MLP with residual (skip) connections between hidden layers. It often performs surprisingly well on tabular data.
+
+```go
+rn, err := tabular.NewTabResNet(tabular.TabResNetConfig{
+	InputDim:   10,
+	OutputDim:  3,
+	HiddenDims: []int{64, 64, 32},
+	Activation: tabular.ActivationGELU,
+	Norm:       tabular.NormLayer,
+}, eng, ops)
+```
+
+## Time-Series Forecasting
+
+The `timeseries` package provides neural architectures for multi-horizon forecasting. These models accept temporal feature sequences and produce point forecasts with optional quantile estimates.
+
+### Temporal Fusion Transformer (TFT)
+
+The TFT is designed for multi-horizon probabilistic forecasting. It uses variable selection networks to identify relevant features, gated residual networks for nonlinear processing, and temporal self-attention to capture long-range dependencies.
+
+```go
+import "github.com/zerfoo/zerfoo/timeseries"
+
+tft, err := timeseries.NewTFT(timeseries.TFTConfig{
+	NumStaticFeatures: 3,
+	NumTimeFeatures:   8,
+	DModel:            32,
+	NHeads:            4,
+	NHorizons:         12,
+	Quantiles:         []float64{0.1, 0.5, 0.9},
+}, eng, ops)
+if err != nil {
+	log.Fatal(err)
+}
+
+forecast, err := tft.Forecast(ctx, staticFeatures, temporalFeatures)
+// forecast.Horizons contains point forecasts for each horizon.
+// forecast.Quantiles[0.1] contains the 10th percentile estimates.
+```
+
+### N-BEATS
+
+N-BEATS (Neural Basis Expansion Analysis for Time Series) is a pure deep learning approach that decomposes the forecast into interpretable components: trend and seasonality.
+
+```go
+nbeats, err := timeseries.NewNBEATS(timeseries.NBEATSConfig{
+	InputLength:     60,
+	OutputLength:    12,
+	StackTypes:      []timeseries.StackType{timeseries.StackTrend, timeseries.StackSeasonality},
+	NBlocksPerStack: 3,
+	HiddenDim:       128,
+	NHarmonics:      8,
+}, eng, ops)
+if err != nil {
+	log.Fatal(err)
+}
+
+forecast, err := nbeats.Forecast(ctx, inputSeries)
+```
+
+The `StackTrend` type uses polynomial basis expansion, while `StackSeasonality` uses Fourier basis expansion with configurable harmonics. You can also use `StackGeneric` for learned basis functions.
+
+### PatchTST
+
+PatchTST (Patch Time-Series Transformer) divides the input time series into patches (similar to how vision transformers patch images), embeds them, and processes the patch sequence through a standard transformer encoder.
+
+```go
+ptst, err := timeseries.NewPatchTST(timeseries.PatchTSTConfig{
+	InputLength:        96,
+	PatchLength:        16,
+	Stride:             8,
+	DModel:             64,
+	NHeads:             4,
+	NLayers:            3,
+	OutputDim:          12,
+
+---
+
+
+## Text Generation
+Source: tutorials/text-generation
+
+
+# Text Generation Deep Dive
+
+This tutorial explores how Zerfoo generates text: sampling strategies, streaming responses token by token, KV cache behavior, and batch generation for throughput.
+
+## How Autoregressive Generation Works
+
+Transformer models generate text one token at a time. At each step, the model computes a probability distribution over the vocabulary (logits), a token is selected, and it becomes part of the input for the next step. The `generate` package implements this loop with configurable sampling, stopping conditions, and KV caching.
+
+When you call `model.Generate`, this is what happens internally:
+
+1. The prompt is tokenized using the BPE tokenizer embedded in the GGUF file.
+2. A `SamplingConfig` is built from the options you pass.
+3. The prompt tokens run through the computation graph in a single forward pass (prefill).
+4. The KV cache stores key/value activations so they are not recomputed on subsequent steps.
+5. One token is generated per step (decode) until a stop condition is met.
+
+## Sampling Strategies
+
+Sampling controls how the next token is chosen from the logit distribution. Zerfoo supports several strategies that can be combined.
+
+### Temperature
+
+Temperature scales the logits before converting them to probabilities. Lower values make the distribution sharper (more deterministic), higher values make it flatter (more creative).
+
+```go
+// Deterministic output (greedy decoding).
+result, _ := model.Generate(ctx, prompt,
+	inference.WithTemperature(0),
+)
+
+// Creative output.
+result, _ := model.Generate(ctx, prompt,
+	inference.WithTemperature(1.2),
+)
+```
+
+A temperature of 0 selects the highest-probability token every time (greedy). A temperature of 1.0 samples proportionally to the probabilities. Values above 1.0 increase randomness.
+
+### Top-K Sampling
+
+Top-K restricts the candidate set to the K most probable tokens before sampling. This prevents the model from selecting very unlikely tokens.
+
+```go
+result, _ := model.Generate(ctx, prompt,
+	inference.WithTemperature(0.8),
+	inference.WithTopK(40),
+)
+```
+
+When `TopK` is 0 (the default), all tokens are candidates.
+
+### Top-P (Nucleus) Sampling
+
+Top-P keeps the smallest set of tokens whose cumulative probability exceeds P. This adapts the candidate set size dynamically -- confident predictions use fewer candidates, uncertain predictions use more.
+
+```go
+result, _ := model.Generate(ctx, prompt,
+	inference.WithTemperature(0.8),
+	inference.WithTopP(0.9),
+)
+```
+
+When `TopP` is 1.0 (the default), no filtering is applied. Top-K and Top-P can be combined: Top-K filters first, then Top-P filters the remainder.
+
+### Repetition Penalty
+
+Repetition penalty reduces the probability of tokens that have already appeared in the output. A value of 1.0 disables the penalty; values above 1.0 penalize repetition.
+
+```go
+result, _ := model.Generate(ctx, prompt,
+	inference.WithRepetitionPenalty(1.1),
+)
+```
+
+### Recommended Defaults
+
+For most use cases, a good starting point is:
+
+```go
+result, _ := model.Generate(ctx, prompt,
+	inference.WithTemperature(0.7),
+	inference.WithTopP(0.9),
+	inference.WithMaxTokens(256),
+)
+```
+
+## Streaming Responses
+
+For interactive applications, you often want to display tokens as they are generated rather than waiting for the full response. The `GenerateStream` method accepts a callback that receives each token:
+
+```go
+err := model.GenerateStream(ctx, "Tell me a story.",
+	func(token string) bool {
+		fmt.Print(token)
+		// Return true to continue, false to stop early.
+		return true
+	},
+	inference.WithTemperature(0.8),
+	inference.WithMaxTokens(512),
+)
+```
+
+The callback function implements the `generate.TokenStream` type. It receives each decoded token string and returns a boolean: `true` to continue generation, `false` to stop immediately.
+
+## Stop Conditions
+
+Generation stops when any of these conditions is met:
+
+1. The end-of-sequence (EOS) token is generated.
+2. `MaxNewTokens` is reached.
+3. A stop string is found in the output.
+4. The streaming callback returns `false`.
+5. The context is cancelled.
+
+You can set custom stop strings:
+
+```go
+result, _ := model.Generate(ctx, prompt,
+	inference.WithMaxTokens(512),
+	inference.WithStopStrings("\n\n", "END"),
+)
+```
+
+## Constrained Decoding with Grammars
+
+Zerfoo supports grammar-constrained generation using the `grammar` package. At each sampling step, a token mask restricts output to tokens valid according to the grammar:
+
+```go
+import "github.com/zerfoo/zerfoo/generate/grammar"
+
+g, err := grammar.Parse(`root ::= "{" ws "\"name\"" ws ":" ws string "}" ...`)
+result, _ := model.Generate(ctx, "Generate a JSON object with a name field.",
+	inference.WithGrammar(g),
+	inference.WithMaxTokens(128),
+)
+```
+
+This is useful for generating structured output like JSON, SQL, or code that must conform to a specific syntax.
+
+## KV Cache and Performance
+
+The KV (Key-Value) cache is the single most important optimization for autoregressive generation. Without it, every decode step would reprocess the entire sequence from scratch.
+
+### How It Works
+
+During the prefill phase, the model computes attention keys and values for all prompt tokens and stores them in the KV cache. During decode, only the new token is processed -- its keys and values are appended to the cache, and attention is computed against all cached entries.
+
+### Memory Considerations
+
+KV cache memory grows linearly with sequence length and model size. For a 7B model with 32 layers and 4096 context length, the KV cache can use 1-2 GB of memory in FP32. You can halve this with FP16 KV storage:
+
+```go
+model, err := inference.LoadFile("model.gguf",
+	inference.WithDevice("cuda"),
+	inference.WithKVDtype("fp16"),
+)
+```
+
+### Paged KV Cache
+
+For serving multiple concurrent requests, Zerfoo supports paged KV caching at the generator level. Paged KV allocates memory in blocks from a shared pool rather than pre-allocating the full sequence length per request. This significantly improves memory utilization when serving requests of varying lengths.
+
+### CUDA Graph Capture
+
+On CUDA devices, Zerfoo captures the decode step as a CUDA graph after the first execution. Subsequent decode steps replay the captured graph, eliminating CPU-side kernel launch overhead. This is why sessions are pooled in `inference.Model` -- reusing sessions preserves GPU memory addresses required for graph replay.
+
+## Batch Generation
+
+When you have multiple prompts to process, batch generation is more efficient than sequential calls:
+
+```go
+prompts := []string{
+	"Summarize quantum computing in one sentence.",
+	"What is the capital of Japan?",
+	"Explain REST APIs briefly.",
+}
+
+results, err := model.GenerateBatch(ctx, prompts,
+	inference.WithTemperature(0.5),
+	inference.WithMaxTokens(64),
+)
+for i, r := range results {
+	fmt.Printf("Prompt %d: %s\n", i+1, r)
+}
+```
+
+`GenerateBatch` processes prompts concurrently using the session pool, taking advantage of GPU parallelism when available.
+
+## Next Steps
+
+- [Running the OpenAI-Compatible API Server](/docs/api/) -- serve your model over HTTP.
+
+---
+
+
+## Generate API
+Source: api/generate
+
+
+# Package generate
+
+```go
+import "github.com/zerfoo/zerfoo/generate"
+```
+
+Package generate implements autoregressive text generation for transformer models loaded by the [inference](/docs/api/inference/) package. It provides the core decode loop, KV caching, token sampling, streaming output, batch generation, and speculative decoding.
+
+Most users should use the high-level [inference.Model](/docs/api/inference/#type-model) API. Use this package directly when you need fine-grained control over the generation loop, KV cache management, or custom sampling strategies.
+
+See the full API on [pkg.go.dev](https://pkg.go.dev/github.com/zerfoo/zerfoo/generate).
+
+## Quick Start
+
+```go
+gen := generate.NewGenerator[float32](graph, tok, engine, cfg)
+text, err := gen.Generate(ctx, "Once upon a time", generate.DefaultSamplingConfig())
+```
+
+
+## Generator Options
+
+### type GeneratorOption
+
+```go
+type GeneratorOption func(*generatorOptions)
+```
+
+Configures a Generator at construction time.
+
+### func WithPagedKV
+
+```go
+func WithPagedKV(maxMemoryMB, headDim int) GeneratorOption
+```
+
+Enables paged KV caching with the given memory budget in MB. When enabled, blocks are allocated from a shared `BlockPool` instead of pre-allocating the full maxSeqLen per sequence. For GQA models, pass `numKVHeads * actualHeadDim` as `headDim`.
+
+```go
+gen := generate.NewGenerator[float32](graph, tok, engine, cfg,
+    generate.WithPagedKV(512, 128), // 512 MB budget, 128-dim heads
+)
+```
+
+### func WithGeneratorKVDtype
+
+```go
+func WithGeneratorKVDtype(dtype string) GeneratorOption
+```
+
+Sets the KV cache storage dtype. Supported: `"fp32"` (default), `"fp16"`. FP16 halves KV cache memory bandwidth.
+
+### func WithMetrics
+
+```go
+func WithMetrics(c runtime.Collector) GeneratorOption
+```
+
+Attaches a metrics collector. When speculative decoding is active, updates a `"speculative_acceptance_rate"` gauge after each verify step.
+
+### func WithPrefixCache
+
+```go
+func WithPrefixCache(capacityBlocks int) GeneratorOption
+```
+
+Enables prefix caching with the given capacity in blocks. When enabled and paged KV is active, sessions that share the same system prompt prefix reuse cached KV blocks instead of re-running prefill.
+
+### func WithSpeculativeDraft
+
+```go
+func WithSpeculativeDraft[T tensor.Numeric](draftGraph *graph.Graph[T], draftCfg ModelConfig, draftLen int) GeneratorOption
+```
+
+Enables speculative decoding using a separate draft model graph. The draft model proposes `draftLen` tokens greedily per step, then the target model verifies them in a single batched forward pass.
+
+
+## Inference Sessions
+
+### type InferenceSession
+
+```go
+type InferenceSession[T tensor.Numeric] struct {
+    // unexported fields
+}
+```
+
+Holds per-session state for independent, concurrent inference. Each session owns its own KV cache and position tracking, allowing multiple sessions to generate simultaneously without data races.
+
+### func (*InferenceSession) Generate
+
+```go
+func (s *InferenceSession[T]) Generate(ctx context.Context, prompt string, sc SamplingConfig) (string, error)
+```
+
+Produces text using the session's own KV cache. Multiple sessions can Generate concurrently.
+
+```go
+session := gen.NewSession()
+text, err := session.Generate(ctx, "Hello", generate.DefaultSamplingConfig())
+```
+
+### func (*InferenceSession) GenerateStream
+
+```go
+func (s *InferenceSession[T]) GenerateStream(ctx context.Context, prompt string, sc SamplingConfig, stream TokenStream) error
+```
+
+Produces text using the session's own KV cache, delivering tokens via a stream callback.
+
+### func (*InferenceSession) Cache
+
+```go
+func (s *InferenceSession[T]) Cache() CacheProvider[T]
+```
+
+Returns the session's KV cache provider.
+
+
+## Batch Types
+
+### type BatchRequest
+
+```go
+type BatchRequest struct {
+    Prompt   string
+    Sampling SamplingConfig
+}
+```
+
+A single generation request in a batch.
+
+### type BatchResult
+
+```go
+type BatchResult struct {
+    Text string
+    Err  error
+}
+```
+
+The output for a single request in a batch.
+
+
+## KVCache (CPU Pre-allocated)
+
+### type KVCache
+
+```go
+type KVCache[T tensor.Numeric] struct {
+    // unexported fields
+}
+```
+
+Stores key-value tensors for all attention layers during autoregressive generation. Buffers are pre-allocated to maxSeqLen on first `Update`, and subsequent Updates copy data at the cursor position with zero allocation. Suitable for simple CPU inference.
+
+### func NewKVCache
+
+```go
+func NewKVCache[T tensor.Numeric](numLayers, maxSeqLen int) *KVCache[T]
+```
+
+Creates a KVCache for the specified number of layers and maximum sequence length. Backing buffers are lazily allocated on the first Update call.
+
+```go
+cache := generate.NewKVCache[float32](32, 4096)
+```
+
+### func (*KVCache) Update
+
+```go
+func (c *KVCache[T]) Update(layer int, newK, newV *tensor.TensorNumeric[T]) error
+```
+
+Appends new key and value tensors to the cache. Tensors must have shape `[batch, seq_len, dim]`.
+
+### func (*KVCache) Get
+
+```go
+func (c *KVCache[T]) Get(layer int) (*LayerKV[T], bool)
+```
+
+Returns the cached KV pair for the given layer as tensors covering `[0:cursor]`. For batch=1, zero-copy views are returned.
+
+### func (*KVCache) SeqLen / Reset / Truncate / NumLayers
+
+```go
+func (c *KVCache[T]) SeqLen() int
+func (c *KVCache[T]) Reset()
+func (c *KVCache[T]) Truncate(newSeqLen int)
+func (c *KVCache[T]) NumLayers() int
+```
+
+
+## TensorCache (GPU Pre-allocated)
+
+### type TensorCache
+
+```go
+
+---
+
+
+## Inference API
+Source: api/inference
+
+
+# Package inference
+
+```go
+import "github.com/zerfoo/zerfoo/inference"
+```
+
+Package inference provides a high-level API for loading GGUF models and running text generation, chat, embedding, and speculative decoding with minimal boilerplate.
+
+For lower-level control over text generation, KV caching, and sampling, see the [generate](/docs/api/generate) package. For an OpenAI-compatible HTTP server built on top of this package, see the [serve](/docs/api/serve) package.
+
+Full method signatures: [pkg.go.dev/github.com/zerfoo/zerfoo/inference](https://pkg.go.dev/github.com/zerfoo/zerfoo/inference)
+
+## Quick Start
+
+```go
+m, err := inference.Load("gemma-3-1b-q4",
+    inference.WithDevice("cuda"),
+    inference.WithMaxSeqLen(4096),
+)
+if err != nil {
+    log.Fatal(err)
+}
+defer m.Close()
+
+text, err := m.Generate(ctx, "Explain gradient descent briefly.",
+    inference.WithMaxTokens(256),
+    inference.WithTemperature(0.7),
+)
+```
+
+
+## Load Options
+
+### type Option
+
+```go
+type Option func(*loadOptions)
+```
+
+Option configures model loading. Pass these to `Load` or `LoadFile`.
+
+### func WithDevice
+
+```go
+func WithDevice(device string) Option
+```
+
+Sets the compute device. Supported values: `"cpu"`, `"cuda"`, `"cuda:N"` (specific GPU), `"rocm"`, `"opencl"`.
+
+```go
+m, _ := inference.Load("gemma-3-1b-q4", inference.WithDevice("cuda:0"))
+```
+
+### func WithCacheDir
+
+```go
+func WithCacheDir(dir string) Option
+```
+
+Sets the local directory for cached model files.
+
+### func WithMaxSeqLen
+
+```go
+func WithMaxSeqLen(n int) Option
+```
+
+Overrides the model's default maximum sequence length.
+
+### func WithRegistry
+
+```go
+func WithRegistry(r registry.ModelRegistry) Option
+```
+
+Supplies a custom model registry for model resolution.
+
+### func WithBackend
+
+```go
+func WithBackend(backend string) Option
+```
+
+Selects the inference backend. Supported values: `""` or `"default"` for the standard Engine path, `"tensorrt"` for TensorRT-optimized inference. TensorRT requires the cuda build tag and a CUDA device.
+
+### func WithPrecision
+
+```go
+func WithPrecision(precision string) Option
+```
+
+Sets the compute precision for the TensorRT backend. Supported values: `""` or `"fp32"` for full precision, `"fp16"` for half precision. Has no effect when the backend is not `"tensorrt"`.
+
+### func WithDType
+
+```go
+func WithDType(dtype string) Option
+```
+
+Sets the compute precision for the GPU engine. Supported values: `""` or `"fp32"` for full precision, `"fp16"` for FP16 compute. FP16 mode converts activations F32->FP16 before GPU kernels and back after. Has no effect on CPU engines.
+
+### func WithKVDtype
+
+```go
+func WithKVDtype(dtype string) Option
+```
+
+Sets the KV cache storage dtype. Supported: `"fp32"` (default), `"fp16"`. FP16 halves KV cache bandwidth by storing keys/values in half precision.
+
+### func WithMmap
+
+```go
+func WithMmap(enabled bool) Option
+```
+
+Enables memory-mapped model loading. When true, the file is mapped into memory using `syscall.Mmap` instead of `os.ReadFile`, avoiding heap allocation for model weights. Only supported on unix platforms.
+
+
+## Generate Options
+
+### type GenerateOption
+
+```go
+type GenerateOption func(*generate.SamplingConfig)
+```
+
+GenerateOption configures a generation call. Pass these to `Generate`, `GenerateStream`, `GenerateBatch`, `Chat`, or `SpeculativeGenerate`.
+
+### func WithTemperature
+
+```go
+func WithTemperature(t float64) GenerateOption
+```
+
+Sets the sampling temperature. Higher values produce more random output; 0 uses greedy (argmax) decoding.
+
+### func WithTopK
+
+```go
+func WithTopK(k int) GenerateOption
+```
+
+Sets the top-K sampling cutoff. Only the top K most probable tokens are considered. 0 disables top-K filtering.
+
+### func WithTopP
+
+```go
+func WithTopP(p float64) GenerateOption
+```
+
+Sets the nucleus (top-P) sampling threshold. Tokens are selected from the smallest set whose cumulative probability exceeds P. 1.0 disables top-P filtering.
+
+### func WithMaxTokens
+
+```go
+func WithMaxTokens(n int) GenerateOption
+```
+
+Sets the maximum number of tokens to generate.
+
+### func WithRepetitionPenalty
+
+```go
+func WithRepetitionPenalty(p float64) GenerateOption
+```
+
+Sets the repetition penalty factor. Values > 1.0 penalize repeated tokens.
+
+### func WithStopStrings
+
+```go
+func WithStopStrings(ss ...string) GenerateOption
+```
+
+Sets strings that terminate generation when encountered in the output.
+
+### func WithGrammar
+
+```go
+func WithGrammar(g *grammar.Grammar) GenerateOption
+```
+
+Sets a grammar state machine for constrained decoding. When set, a token mask is applied at each sampling step to restrict output to tokens valid according to the grammar.
+
+
+## Model Metadata
+
+### type ModelMetadata
+
+```go
+type ModelMetadata struct {
+    Architecture          string
+    VocabSize             int
+    HiddenSize            int
+    NumLayers             int
+    MaxPositionEmbeddings int
+    EOSTokenID            int
+    BOSTokenID            int
+    ChatTemplate          string
+
+---
+
+
+## Serve API
+Source: api/serve
+
+
+# Package serve
+
+```
+import "github.com/zerfoo/zerfoo/serve"
+```
+
+Package serve provides an OpenAI-compatible HTTP API server for model inference. The server exposes REST endpoints that follow the OpenAI API specification, enabling drop-in compatibility with existing OpenAI client libraries and tools.
+
+For model loading, see the [inference](/docs/api/inference/) package. For lower-level generation control, see the [generate](/docs/api/generate/) package.
+
+See [pkg.go.dev/github.com/zerfoo/zerfoo/serve](https://pkg.go.dev/github.com/zerfoo/zerfoo/serve) for full method signatures.
+
+## Quick Start
+
+```go
+m, _ := inference.Load("gemma-3-1b-q4", inference.WithDevice("cuda"))
+defer m.Close()
+
+srv := serve.NewServer(m,
+    serve.WithLogger(logger),
+    serve.WithMetrics(collector),
+)
+log.Fatal(http.ListenAndServe(":8080", srv.Handler()))
+```
+
+
+## Server Options
+
+### type ServerOption
+
+```go
+type ServerOption func(*Server)
+```
+
+Configures the server.
+
+### func WithLogger
+
+```go
+func WithLogger(l log.Logger) ServerOption
+```
+
+Sets the logger for request logging.
+
+### func WithMetrics
+
+```go
+func WithMetrics(c runtime.Collector) ServerOption
+```
+
+Sets the metrics collector for token rate and request tracking.
+
+### func WithDraftModel
+
+```go
+func WithDraftModel(draft *inference.Model) ServerOption
+```
+
+Enables speculative decoding. When set, completion requests use the draft model to propose tokens and the target model to verify them.
+
+```go
+target, _ := inference.Load("llama-3-70b-q4", inference.WithDevice("cuda"))
+draft, _ := inference.Load("llama-3-8b-q4", inference.WithDevice("cuda"))
+
+srv := serve.NewServer(target, serve.WithDraftModel(draft))
+```
+
+### func WithBatchScheduler
+
+```go
+func WithBatchScheduler(bs *BatchScheduler) ServerOption
+```
+
+Attaches a batch scheduler for non-streaming requests. Incoming requests are grouped into batches for higher throughput.
+
+### func WithTranscriber
+
+```go
+func WithTranscriber(t Transcriber) ServerOption
+```
+
+Sets the audio transcription backend for the `/v1/audio/transcriptions` endpoint.
+
+
+## Chat Completions
+
+### type ChatCompletionRequest
+
+```go
+type ChatCompletionRequest struct {
+    Model          string          `json:"model"`
+    Messages       []ChatMessage   `json:"messages"`
+    Temperature    *float64        `json:"temperature,omitempty"`
+    TopP           *float64        `json:"top_p,omitempty"`
+    MaxTokens      *int            `json:"max_tokens,omitempty"`
+    Stream         bool            `json:"stream"`
+    Tools          []Tool          `json:"tools,omitempty"`
+    ToolChoice     *ToolChoice     `json:"tool_choice,omitempty"`
+    ResponseFormat *ResponseFormat `json:"response_format,omitempty"`
+}
+```
+
+Represents the OpenAI chat completion request. Set `Stream: true` for SSE streaming.
+
+### type ChatCompletionResponse
+
+```go
+type ChatCompletionResponse struct {
+    ID      string                 `json:"id"`
+    Object  string                 `json:"object"`
+    Created int64                  `json:"created"`
+    Model   string                 `json:"model"`
+    Choices []ChatCompletionChoice `json:"choices"`
+    Usage   UsageInfo              `json:"usage"`
+}
+```
+
+### type ChatCompletionChoice
+
+```go
+type ChatCompletionChoice struct {
+    Index        int         `json:"index"`
+    Message      ChatMessage `json:"message"`
+    FinishReason string      `json:"finish_reason"`
+    ToolCalls    []ToolCall  `json:"tool_calls,omitempty"`
+}
+```
+
+### type ChatMessage
+
+```go
+type ChatMessage struct {
+    Role      string     `json:"role"`
+    Content   string     `json:"content"`
+    ImageURLs []ImageURL `json:"-"`
+}
+```
+
+Content can be either a plain string or an array of content parts (for vision requests with `type:"text"` and `type:"image_url"`). Custom JSON unmarshaling handles both formats.
+
+
+## Embeddings
+
+### type EmbeddingRequest
+
+```go
+type EmbeddingRequest struct {
+    Model string      `json:"model"`
+    Input interface{} `json:"input"` // string or []string
+}
+```
+
+### type EmbeddingResponse
+
+```go
+type EmbeddingResponse struct {
+    Object string            `json:"object"`
+    Data   []EmbeddingObject `json:"data"`
+    Model  string            `json:"model"`
+    Usage  UsageInfo         `json:"usage"`
+}
+```
+
+### type EmbeddingObject
+
+```go
+type EmbeddingObject struct {
+    Object    string    `json:"object"`
+    Embedding []float32 `json:"embedding"`
+    Index     int       `json:"index"`
+}
+```
+
+
+## Tool Calling
+
+Chat completion requests may include OpenAI-compatible tool definitions. The server validates tool schemas, detects tool calls in model output, and returns structured `tool_calls` in the response.
+
+### type Tool
+
+```go
+type Tool struct {
+    Type     string       `json:"type"`
+    Function ToolFunction `json:"function"`
+}
+```
+
+### type ToolFunction
+
+```go
+type ToolFunction struct {
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Parameters  json.RawMessage `json:"parameters,omitempty"`
+}
+```
+
+### type ToolChoice
+
+
+---
+
+
+## Basic Text Generation
+Source: cookbooks/basic-text-generation
+
+
+# Basic Text Generation
+
+Load a GGUF model and generate a text completion with a single function call. This is the simplest way to run inference with Zerfoo.
+
+## Usage
+
+```bash
+go run ./docs/cookbook/01-basic-text-generation/ --model path/to/model.gguf
+go run ./docs/cookbook/01-basic-text-generation/ --model google/gemma-3-1b
+```
+
+## Full Code
+
+```go
+// Recipe 01: Basic Text Generation
+//
+// Load a GGUF model and generate a text completion with a single function call.
+// This is the simplest way to run inference with Zerfoo.
+//
+// Usage:
+//
+//	go run ./docs/cookbook/01-basic-text-generation/ --model path/to/model.gguf
+//	go run ./docs/cookbook/01-basic-text-generation/ --model google/gemma-3-1b
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/zerfoo/zerfoo"
+)
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file or HuggingFace model ID")
+	prompt := flag.String("prompt", "Explain goroutines in one paragraph.", "generation prompt")
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: basic-text-generation --model <path-or-id> [--prompt <text>]")
+		os.Exit(1)
+	}
+
+	// Load the model. Accepts a local GGUF path or a HuggingFace model ID
+	// like "google/gemma-3-1b". Remote models are downloaded and cached.
+	m, err := zerfoo.Load(*modelPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer m.Close()
+
+	// Generate a completion. The result includes the generated text,
+	// token count, and wall-clock duration.
+	result, err := m.Generate(context.Background(), *prompt,
+		zerfoo.WithGenMaxTokens(256),
+		zerfoo.WithGenTemperature(0.7),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(result.Text)
+	fmt.Fprintf(os.Stderr, "\n[%d tokens in %s]\n", result.TokenCount, result.Duration)
+}
+```
+
+## How It Works
+
+1. **Model loading** -- `zerfoo.Load` accepts either a local GGUF file path or a HuggingFace model ID (e.g. `"google/gemma-3-1b"`). Remote models are downloaded and cached automatically.
+2. **Generation** -- `m.Generate` runs autoregressive decoding with the given prompt. The `WithGenMaxTokens` and `WithGenTemperature` options control output length and sampling randomness.
+3. **Result** -- The returned `result` contains `Text` (the generated string), `TokenCount`, and `Duration` for performance tracking.
+
+## See Also
+
+- [Quick Start](/docs/getting-started/quickstart) -- minimal setup guide
+- [Streaming Chat](/docs/cookbooks/streaming-chat) -- stream tokens as they are generated
+- [Custom Sampling](/docs/cookbooks/custom-sampling) -- explore temperature, top-K, and top-P
+
+---
+
+
+## Batch Inference
+Source: cookbooks/batch-inference
+
+
+# Batch Inference
+
+Run inference over many prompts concurrently using goroutines. This pattern is useful for processing datasets, evaluations, or any batch workload where you need to generate completions for a list of inputs.
+
+The program loads a single model and fans out generation across a configurable number of worker goroutines, collecting results in order.
+
+## Full Example
+
+```go
+// Recipe 08: Batch Inference
+//
+// Run inference over many prompts concurrently using goroutines. This pattern
+// is useful for processing datasets, evaluations, or any batch workload.
+//
+// The program loads a single model and fans out generation across a configurable
+// number of worker goroutines, collecting results in order.
+//
+// Usage:
+//
+//	go run ./docs/cookbook/08-batch-inference/ --model path/to/model.gguf
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"os"
+	"sync"
+
+	"github.com/zerfoo/zerfoo"
+)
+
+// prompts is a batch of inputs to process.
+var prompts = []string{
+	"Summarize the Go memory model in one sentence.",
+	"What is a goroutine?",
+	"Explain channels in Go.",
+	"What is the purpose of the context package?",
+	"Describe Go's approach to error handling.",
+	"What is a defer statement?",
+	"Explain interfaces in Go.",
+	"What are Go modules?",
+}
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file or HuggingFace model ID")
+	workers := flag.Int("workers", 4, "number of concurrent workers")
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: batch-inference --model <path> [--workers 4]")
+		os.Exit(1)
+	}
+
+	m, err := zerfoo.Load(*modelPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer m.Close()
+
+	// Results are stored in order.
+	results := make([]string, len(prompts))
+	errs := make([]error, len(prompts))
+
+	// Fan out work across goroutines.
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, *workers)
+
+	for i, prompt := range prompts {
+		wg.Add(1)
+		go func(idx int, p string) {
+			defer wg.Done()
+			sem <- struct{}{}        // Acquire worker slot.
+			defer func() { <-sem }() // Release.
+
+			result, err := m.Generate(context.Background(), p,
+				zerfoo.WithGenMaxTokens(128),
+				zerfoo.WithGenTemperature(0.3),
+			)
+			if err != nil {
+				errs[idx] = err
+				return
+			}
+			results[idx] = result.Text
+		}(i, prompt)
+	}
+
+	wg.Wait()
+
+	// Print results.
+	for i, prompt := range prompts {
+		fmt.Printf("--- Prompt %d: %s\n", i+1, prompt)
+		if errs[i] != nil {
+			fmt.Printf("    Error: %v\n", errs[i])
+		} else {
+			fmt.Printf("    %s\n\n", results[i])
+		}
+	}
+}
+```
+
+## How It Works
+
+1. **Load the model once** -- `zerfoo.Load` loads the GGUF model into memory. The model handle is safe for concurrent use from multiple goroutines.
+
+2. **Fan out with a semaphore** -- A buffered channel acts as a semaphore to limit the number of concurrent inference calls to `--workers` (default 4). Each goroutine acquires a slot before calling `Generate` and releases it when done.
+
+3. **Collect results in order** -- Results and errors are written to pre-allocated slices indexed by prompt position, so the output order matches the input order regardless of which goroutine finishes first.
+
+4. **Configurable generation** -- Each call uses `WithGenMaxTokens` and `WithGenTemperature` to control output length and randomness. You can pass any generation option supported by the API.
+
+## Tuning the Worker Count
+
+- **CPU inference**: Start with `workers = runtime.NumCPU()` and adjust based on memory. Each concurrent generation allocates its own KV cache.
+- **GPU inference**: GPU memory is the bottleneck. Start with 1-2 workers and increase until VRAM is saturated.
+- **Latency vs. throughput**: More workers increases total throughput but may increase per-request latency due to resource contention.
+
+## Related API Reference
+
+- [Generate API](/docs/api/generate/) -- generation options and result types
+- [Inference API](/docs/api/inference/) -- model loading and device selection
+
+---
+
+
+## Custom Sampling
+Source: cookbooks/custom-sampling
+
+
+# Custom Sampling Parameters
+
+Demonstrate how temperature, top-K, top-P, and repetition penalty affect text generation. The program generates the same prompt three times with different sampling configurations so you can compare the outputs.
+
+## Usage
+
+```bash
+go run ./docs/cookbook/05-custom-sampling/ --model path/to/model.gguf
+```
+
+## Full Code
+
+```go
+// Recipe 05: Custom Sampling Parameters
+//
+// Demonstrate how temperature, top-K, top-P, and repetition penalty affect
+// text generation. The program generates the same prompt three times with
+// different sampling configurations so you can compare the outputs.
+//
+// Usage:
+//
+//	go run ./docs/cookbook/05-custom-sampling/ --model path/to/model.gguf
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/zerfoo/zerfoo/inference"
+)
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file")
+	device := flag.String("device", "cpu", `compute device: "cpu", "cuda"`)
+	prompt := flag.String("prompt", "Write a haiku about concurrency.", "generation prompt")
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: custom-sampling --model <model.gguf>")
+		os.Exit(1)
+	}
+
+	model, err := inference.LoadFile(*modelPath, inference.WithDevice(*device))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer model.Close()
+
+	ctx := context.Background()
+
+	// Configuration 1: Greedy decoding (temperature=0).
+	// Deterministic output -- always picks the highest-probability token.
+	fmt.Println("=== Greedy (temperature=0) ===")
+	text, err := model.Generate(ctx, *prompt,
+		inference.WithMaxTokens(64),
+		inference.WithTemperature(0),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(text)
+
+	// Configuration 2: Creative (high temperature + top-P nucleus sampling).
+	// Produces more varied, surprising output.
+	fmt.Println("\n=== Creative (temp=1.2, top-P=0.9) ===")
+	text, err = model.Generate(ctx, *prompt,
+		inference.WithMaxTokens(64),
+		inference.WithTemperature(1.2),
+		inference.WithTopP(0.9),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(text)
+
+	// Configuration 3: Focused (low temperature + top-K).
+	// Picks from a narrow set of likely tokens for coherent output.
+	fmt.Println("\n=== Focused (temp=0.3, top-K=10) ===")
+	text, err = model.Generate(ctx, *prompt,
+		inference.WithMaxTokens(64),
+		inference.WithTemperature(0.3),
+		inference.WithTopK(10),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(text)
+}
+```
+
+## How It Works
+
+The recipe runs three generation passes with the same prompt but different sampling strategies:
+
+| Configuration | Settings | Behavior |
+|---------------|----------|----------|
+| **Greedy** | `temperature=0` | Deterministic -- always picks the highest-probability token. Produces the most predictable output. |
+| **Creative** | `temperature=1.2, top-P=0.9` | High temperature flattens the probability distribution, making unlikely tokens more probable. Top-P (nucleus sampling) truncates the distribution to the smallest set of tokens whose cumulative probability exceeds 0.9. |
+| **Focused** | `temperature=0.3, top-K=10` | Low temperature sharpens the distribution toward high-probability tokens. Top-K limits selection to the 10 most likely tokens. Produces coherent, on-topic output. |
+
+## See Also
+
+- [Basic Text Generation](/docs/cookbooks/basic-text-generation) -- simple generation with default sampling
+- [Structured JSON Output](/docs/cookbooks/structured-json-output) -- constrain output format with grammar-guided decoding
+
+---
+
+
+## Embedding Similarity
+Source: cookbooks/embedding-similarity
+
+
+# Embedding and Cosine Similarity
+
+Compute text embeddings and rank a corpus of documents by relevance to a query using cosine similarity. This is the retrieval building block for semantic search and RAG systems.
+
+## Usage
+
+```bash
+go run ./docs/cookbook/03-embedding-similarity/ --model path/to/model.gguf
+go run ./docs/cookbook/03-embedding-similarity/ --model path/to/model.gguf --query "memory management"
+```
+
+## Full Code
+
+```go
+// Recipe 03: Embedding and Cosine Similarity
+//
+// Compute text embeddings and rank a corpus of documents by relevance to a
+// query using cosine similarity. This is the retrieval building block for
+// semantic search and RAG systems.
+//
+// Usage:
+//
+//	go run ./docs/cookbook/03-embedding-similarity/ --model path/to/model.gguf
+//	go run ./docs/cookbook/03-embedding-similarity/ --model path/to/model.gguf --query "memory management"
+package main
+
+import (
+	"flag"
+	"fmt"
+	"os"
+	"sort"
+
+	"github.com/zerfoo/zerfoo"
+)
+
+// corpus is a small document set for demonstration.
+var corpus = []string{
+	"Go's garbage collector is a concurrent, tri-color, mark-sweep collector.",
+	"Goroutines are multiplexed onto OS threads by the Go runtime scheduler.",
+	"The sync.Mutex type provides mutual exclusion for shared state.",
+	"Go modules use go.mod and go.sum to manage versioned dependencies.",
+	"Channels are the primary mechanism for goroutine communication.",
+	"The context package carries deadlines and cancellation signals.",
+	"Go interfaces are satisfied implicitly without an implements keyword.",
+	"The testing package supports automated unit and benchmark tests.",
+}
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file or HuggingFace model ID")
+	query := flag.String("query", "How does Go handle concurrency?", "search query")
+	topN := flag.Int("top", 3, "number of results to display")
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: embedding-similarity --model <path> [--query <text>]")
+		os.Exit(1)
+	}
+
+	m, err := zerfoo.Load(*modelPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer m.Close()
+
+	// Embed all documents in the corpus.
+	corpusEmbeds, err := m.Embed(corpus)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "embed corpus: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Embed the query.
+	queryEmbeds, err := m.Embed([]string{*query})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "embed query: %v\n", err)
+		os.Exit(1)
+	}
+	qe := queryEmbeds[0]
+
+	// Rank documents by cosine similarity.
+	type result struct {
+		doc   string
+		score float32
+	}
+	results := make([]result, len(corpus))
+	for i, emb := range corpusEmbeds {
+		results[i] = result{corpus[i], qe.CosineSimilarity(emb)}
+	}
+	sort.Slice(results, func(i, j int) bool { return results[i].score > results[j].score })
+
+	fmt.Printf("Query: %q\n\n", *query)
+	n := *topN
+	if n > len(results) {
+		n = len(results)
+	}
+	for i := 0; i < n; i++ {
+		fmt.Printf("  %d. [%.4f] %s\n", i+1, results[i].score, results[i].doc)
+	}
+}
+```
+
+## How It Works
+
+1. **Embedding** -- `m.Embed` takes a slice of strings and returns a slice of embedding vectors. Each vector captures the semantic meaning of the input text.
+2. **Cosine similarity** -- The `CosineSimilarity` method computes the cosine of the angle between two embedding vectors. Values closer to 1.0 indicate higher semantic similarity.
+3. **Ranking** -- Documents are sorted by their similarity score to the query, and the top N results are displayed.
+
+This pattern is the foundation for retrieval-augmented generation (RAG): embed your document corpus, embed the user query, retrieve the most relevant documents, and pass them as context to the generation step.
+
+## See Also
+
+- [Basic Text Generation](/docs/cookbooks/basic-text-generation) -- generate text completions
+- [OpenAI Server](/docs/cookbooks/openai-server) -- the `/v1/embeddings` endpoint serves embeddings over HTTP
+
+---
+
+
+## LoRA Fine-Tuning
+Source: cookbooks/lora-fine-tuning
+
+
+# LoRA Fine-Tuning
+
+Inject LoRA (Low-Rank Adaptation) adapters into a model and train on custom data. Only the small LoRA A and B matrices are updated -- the base model weights stay frozen, making fine-tuning fast and memory-efficient.
+
+This recipe demonstrates the LoRA + training API at the graph/layer level:
+
+- Building a model with Linear layers
+- Injecting LoRA adapters into target layers
+- Running a forward pass through LoRA-wrapped layers
+- Saving and loading the LoRA checkpoint
+
+## Full Example
+
+```go
+// Recipe 07: Fine-Tuning with LoRA
+//
+// Inject LoRA (Low-Rank Adaptation) adapters into a model and train on custom
+// data. Only the small LoRA matrices are updated -- the base model weights stay
+// frozen, making fine-tuning fast and memory-efficient.
+//
+// This recipe demonstrates the LoRA + training API at the graph/layer level:
+//   - Building a model with Linear layers
+//   - Injecting LoRA adapters into target layers
+//   - Running a forward pass through LoRA-wrapped layers
+//   - Saving and loading the LoRA checkpoint
+//
+// Usage:
+//
+//	go run ./docs/cookbook/07-lora-fine-tuning/
+package main
+
+import (
+	"context"
+	"fmt"
+	"math/rand/v2"
+	"os"
+
+	"github.com/zerfoo/ztensor/compute"
+	"github.com/zerfoo/ztensor/graph"
+	"github.com/zerfoo/ztensor/numeric"
+	"github.com/zerfoo/ztensor/tensor"
+	"github.com/zerfoo/ztensor/types"
+	"github.com/zerfoo/zerfoo/training/lora"
+)
+
+// simpleLinear is a minimal Linear layer that satisfies lora.Layer[T]
+// (which requires graph.Node[T] + Named).
+type simpleLinear struct {
+	name    string
+	weights *graph.Parameter[float32]
+	engine  compute.Engine[float32]
+	dIn     int
+	dOut    int
+}
+
+func newSimpleLinear(name string, engine compute.Engine[float32], dIn, dOut int) (*simpleLinear, error) {
+	data := make([]float32, dIn*dOut)
+	for i := range data {
+		data[i] = rand.Float32()*0.02 - 0.01
+	}
+	w, err := tensor.New[float32]([]int{dIn, dOut}, data)
+	if err != nil {
+		return nil, err
+	}
+	param, err := graph.NewParameter[float32](name+"_weights", w, tensor.New[float32])
+	if err != nil {
+		return nil, err
+	}
+	return &simpleLinear{name: name, weights: param, engine: engine, dIn: dIn, dOut: dOut}, nil
+}
+
+func (l *simpleLinear) Name() string                            { return l.name }
+func (l *simpleLinear) OpType() string                          { return "Linear" }
+func (l *simpleLinear) Attributes() map[string]any              { return nil }
+func (l *simpleLinear) OutputShape() []int                      { return []int{-1, l.dOut} }
+func (l *simpleLinear) Parameters() []*graph.Parameter[float32] { return []*graph.Parameter[float32]{l.weights} }
+func (l *simpleLinear) InputFeatures() int                      { return l.dIn }
+func (l *simpleLinear) OutputFeatures() int                     { return l.dOut }
+
+func (l *simpleLinear) Forward(ctx context.Context, inputs ...*tensor.TensorNumeric[float32]) (*tensor.TensorNumeric[float32], error) {
+	return l.engine.MatMul(ctx, inputs[0], l.weights.Value)
+}
+
+func (l *simpleLinear) Backward(_ context.Context, _ types.BackwardMode, outputGradient *tensor.TensorNumeric[float32], _ ...*tensor.TensorNumeric[float32]) ([]*tensor.TensorNumeric[float32], error) {
+	return []*tensor.TensorNumeric[float32]{outputGradient}, nil
+}
+
+// simpleModel wraps a set of Linear layers for LoRA injection.
+type simpleModel struct {
+	layers map[string]lora.Layer[float32]
+	order  []string
+}
+
+func (m *simpleModel) Layers() []lora.Layer[float32] {
+	var out []lora.Layer[float32]
+	for _, name := range m.order {
+		out = append(out, m.layers[name])
+	}
+	return out
+}
+
+func (m *simpleModel) ReplaceLayer(name string, replacement lora.Layer[float32]) error {
+	if _, ok := m.layers[name]; !ok {
+		return fmt.Errorf("layer %q not found", name)
+	}
+	m.layers[name] = replacement
+	return nil
+}
+
+func main() {
+	ops := numeric.Float32Ops{}
+	engine := compute.NewCPUEngine[float32](ops)
+
+	// Build a small model with attention-like projections.
+	qProj, _ := newSimpleLinear("q_proj", engine, 64, 64)
+	kProj, _ := newSimpleLinear("k_proj", engine, 64, 64)
+	vProj, _ := newSimpleLinear("v_proj", engine, 64, 64)
+	oProj, _ := newSimpleLinear("o_proj", engine, 64, 64)
+
+	model := &simpleModel{
+		layers: map[string]lora.Layer[float32]{
+			"q_proj": qProj, "k_proj": kProj, "v_proj": vProj, "o_proj": oProj,
+		},
+		order: []string{"q_proj", "k_proj", "v_proj", "o_proj"},
+	}
+
+	// Inject LoRA adapters into Q and V projections (rank=8, alpha=16).
+	// Only the LoRA A and B matrices are trainable; base weights are frozen.
+	err := lora.InjectLoRA[float32](
+		model,
+		8,     // rank
+		16.0,  // alpha
+		[]string{"q_proj", "v_proj"},
+		engine,
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "inject lora: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Injected LoRA into q_proj and v_proj (rank=8, alpha=16)")
+
+	// Count total parameters across all layers.
+	var totalParams int
+	for _, layer := range model.Layers() {
+		for _, p := range layer.Parameters() {
+			n := 1
+			for _, d := range p.Value.Shape() {
+				n *= d
+			}
+			totalParams += n
+		}
+	}
+	fmt.Printf("Total parameters: %d\n", totalParams)
+
+	// Forward pass with synthetic data through LoRA-wrapped layers.
+	ctx := context.Background()
+	inputData := make([]float32, 4*64)
+	for i := range inputData {
+		inputData[i] = rand.Float32()
+	}
+	input, _ := tensor.New[float32]([]int{4, 64}, inputData)
+
+	out := input
+	for _, name := range model.order {
+		layer := model.layers[name]
+		out, err = layer.Forward(ctx, out)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "forward %s: %v\n", name, err)
+			os.Exit(1)
+		}
+	}
+	fmt.Printf("Output shape: %v\n", out.Shape())
+
+	// Save the LoRA adapter checkpoint.
+	checkpointPath := "lora-adapter.bin"
+	if err := lora.SaveAdapter[float32](checkpointPath, model); err != nil {
+		fmt.Fprintf(os.Stderr, "save: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Saved LoRA adapter to %s\n", checkpointPath)
+
+	// Clean up the checkpoint file created by this demo.
+	os.Remove(checkpointPath)
+	fmt.Println("Done.")
+}
+```
+
+## How It Works
+
+1. **Build a model with Linear layers** -- The example creates four linear projection layers (Q, K, V, O) that mimic the attention projections in a transformer. Each layer implements the `lora.Layer[T]` interface, which requires `Forward`, `Parameters`, `InputFeatures`, `OutputFeatures`, and `Name` methods.
+
+2. **Inject LoRA adapters** -- `lora.InjectLoRA` wraps the specified layers with LoRA adapters. Each adapter adds two small matrices (A and B) of the given rank. The original weight matrix is frozen, and only the LoRA matrices are trainable. The scaling factor `alpha/rank` controls the magnitude of the adapter's contribution.
+
+3. **Forward pass** -- Input flows through each layer sequentially. For LoRA-wrapped layers, the output is `base_output + (alpha/rank) * (x @ A @ B)`, where A and B are the low-rank adapter matrices.
+
+4. **Save the checkpoint** -- `lora.SaveAdapter` serializes only the LoRA parameters (not the base model weights), producing a small checkpoint file that can be loaded later with `lora.LoadAdapter`.
+
+## Key Concepts
+
+
+---
+
+
+## OpenAI Server
+Source: cookbooks/openai-server
+
+
+# OpenAI-Compatible Server
+
+Serve a GGUF model behind an OpenAI-compatible HTTP API. Clients that work with the OpenAI API (curl, the Python `openai` library, LangChain, etc.) can connect directly -- just point them at `http://localhost:8080`.
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/v1/chat/completions` | Chat completion |
+| POST | `/v1/completions` | Text completion |
+| POST | `/v1/embeddings` | Embeddings |
+| GET | `/v1/models` | Model listing |
+| GET | `/health` | Health check |
+
+## Usage
+
+```bash
+go run ./docs/cookbook/04-openai-server/ --model path/to/model.gguf
+curl http://localhost:8080/v1/chat/completions \
+  -d '{"model":"default","messages":[{"role":"user","content":"Hello"}]}'
+```
+
+## Full Code
+
+```go
+// Recipe 04: OpenAI-Compatible Server
+//
+// Serve a GGUF model behind an OpenAI-compatible HTTP API. Clients that work
+// with the OpenAI API (curl, Python openai library, LangChain, etc.) can
+// connect directly -- just point them at http://localhost:8080.
+//
+// Endpoints:
+//   - POST /v1/chat/completions   (chat)
+//   - POST /v1/completions        (text completion)
+//   - POST /v1/embeddings         (embeddings)
+//   - GET  /v1/models             (model listing)
+//   - GET  /health                (health check)
+//
+// Usage:
+//
+//	go run ./docs/cookbook/04-openai-server/ --model path/to/model.gguf
+//	curl http://localhost:8080/v1/chat/completions -d '{"model":"default","messages":[{"role":"user","content":"Hello"}]}'
+package main
+
+import (
+	"context"
+	"errors"
+	"flag"
+	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/zerfoo/zerfoo/inference"
+	"github.com/zerfoo/zerfoo/serve"
+)
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file")
+	port := flag.String("port", "8080", "listen port")
+	device := flag.String("device", "cpu", `compute device: "cpu", "cuda", "cuda:0"`)
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: openai-server --model <model.gguf> [--port 8080] [--device cpu]")
+		os.Exit(1)
+	}
+
+	// Load the model.
+	model, err := inference.LoadFile(*modelPath, inference.WithDevice(*device))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer model.Close()
+
+	cfg := model.Config()
+	fmt.Fprintf(os.Stderr, "Loaded %s (%d layers, vocab %d)\n",
+		cfg.Architecture, cfg.NumLayers, cfg.VocabSize)
+
+	// Create the OpenAI-compatible server and wire up HTTP.
+	srv := serve.NewServer(model)
+	httpServer := &http.Server{
+		Addr:    net.JoinHostPort("", *port),
+		Handler: srv.Handler(),
+	}
+
+	// Graceful shutdown on SIGINT / SIGTERM.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	errCh := make(chan error, 1)
+	go func() { errCh <- httpServer.ListenAndServe() }()
+
+	fmt.Fprintf(os.Stderr, "Serving on http://localhost:%s\n", *port)
+
+	select {
+	case <-ctx.Done():
+		fmt.Fprintln(os.Stderr, "\nShutting down...")
+		httpServer.Shutdown(context.Background())
+	case err := <-errCh:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			fmt.Fprintf(os.Stderr, "server: %v\n", err)
+			os.Exit(1)
+		}
+	}
+}
+```
+
+## How It Works
+
+1. **Model loading** -- Uses the `inference` package directly (rather than the high-level `zerfoo` package) for full control over device placement via `inference.WithDevice`.
+2. **Server creation** -- `serve.NewServer` wraps the loaded model with OpenAI-compatible HTTP handlers for chat, completions, embeddings, and model listing.
+3. **Graceful shutdown** -- The server listens for SIGINT/SIGTERM and calls `httpServer.Shutdown` to drain in-flight requests before exiting.
+4. **Device selection** -- The `--device` flag supports `"cpu"`, `"cuda"`, or `"cuda:0"` (for multi-GPU systems) to control where inference runs.
+
+## See Also
+
+- [Streaming Chat](/docs/cookbooks/streaming-chat) -- client-side streaming with `ChatStream`
+- [Embedding Similarity](/docs/cookbooks/embedding-similarity) -- compute embeddings programmatically
+
+---
+
+
+## Retrieval-Augmented Generation (RAG)
+Source: cookbooks/rag
+
+
+# Retrieval-Augmented Generation (RAG)
+
+Combine embedding-based retrieval with text generation. The pipeline:
+
+1. Embed a corpus of documents
+2. Embed the user's query
+3. Find the most relevant documents by cosine similarity
+4. Pass them as context to the model for grounded generation
+
+This is the standard RAG pattern used in knowledge-base chatbots, documentation assistants, and question-answering systems.
+
+## Full Example
+
+```go
+// Recipe 11: Retrieval-Augmented Generation (RAG)
+//
+// Combine embedding-based retrieval with text generation. The pipeline:
+//  1. Embed a corpus of documents
+//  2. Embed the user's query
+//  3. Find the most relevant documents by cosine similarity
+//  4. Pass them as context to the model for grounded generation
+//
+// This is the standard RAG pattern used in knowledge-base chatbots,
+// documentation assistants, and question-answering systems.
+//
+// Usage:
+//
+//	go run ./docs/cookbook/11-rag/ --model path/to/model.gguf
+//	go run ./docs/cookbook/11-rag/ --model path/to/model.gguf --query "How do I use channels?"
+package main
+
+import (
+	"flag"
+	"fmt"
+	"os"
+	"sort"
+	"strings"
+
+	"github.com/zerfoo/zerfoo"
+)
+
+// corpus simulates a knowledge base. In production, this would be loaded
+// from a database, vector store, or file system.
+var corpus = []string{
+	"Goroutines are lightweight threads managed by the Go runtime. Launch one with the go keyword.",
+	"Channels provide typed, thread-safe communication between goroutines. Use make(chan T) to create one.",
+	"The select statement lets a goroutine wait on multiple channel operations simultaneously.",
+	"sync.WaitGroup coordinates goroutines: call Add before launching, Done when finished, Wait to block.",
+	"The context package carries deadlines, cancellation signals, and request-scoped values across API boundaries.",
+	"sync.Mutex and sync.RWMutex protect shared state when channels are not the right fit.",
+	"Go's race detector (go test -race) finds data races at runtime during testing.",
+}
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file or HuggingFace model ID")
+	query := flag.String("query", "How do I coordinate multiple goroutines?", "user question")
+	topK := flag.Int("top-k", 3, "number of documents to retrieve")
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: rag --model <path> [--query <text>]")
+		os.Exit(1)
+	}
+
+	m, err := zerfoo.Load(*modelPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer m.Close()
+
+	// Step 1: Embed the corpus.
+	corpusEmbeds, err := m.Embed(corpus)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "embed corpus: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Step 2: Embed the query.
+	queryEmbeds, err := m.Embed([]string{*query})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "embed query: %v\n", err)
+		os.Exit(1)
+	}
+	qe := queryEmbeds[0]
+
+	// Step 3: Retrieve the top-K most relevant documents.
+	type ranked struct {
+		doc   string
+		score float32
+	}
+	results := make([]ranked, len(corpus))
+	for i, e := range corpusEmbeds {
+		results[i] = ranked{corpus[i], qe.CosineSimilarity(e)}
+	}
+	sort.Slice(results, func(i, j int) bool { return results[i].score > results[j].score })
+
+	k := *topK
+	if k > len(results) {
+		k = len(results)
+	}
+	top := results[:k]
+
+	fmt.Fprintf(os.Stderr, "Retrieved %d documents:\n", k)
+	for i, r := range top {
+		fmt.Fprintf(os.Stderr, "  %d. [%.4f] %s\n", i+1, r.score, r.doc)
+	}
+	fmt.Fprintln(os.Stderr)
+
+	// Step 4: Build a grounded prompt and generate.
+	var docs []string
+	for _, r := range top {
+		docs = append(docs, "- "+r.doc)
+	}
+	prompt := fmt.Sprintf(
+		"Answer the question using only the provided context.\n\nContext:\n%s\n\nQuestion: %s\nAnswer:",
+		strings.Join(docs, "\n"), *query,
+	)
+
+	response, err := m.Chat(prompt)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(response)
+}
+```
+
+## How It Works
+
+1. **Embed the corpus** -- `m.Embed(corpus)` computes embedding vectors for each document in the knowledge base. In production, you would pre-compute and store these in a vector database.
+
+2. **Embed the query** -- The user's question is embedded using the same model, producing a vector in the same space as the corpus embeddings.
+
+3. **Retrieve by cosine similarity** -- The query embedding is compared against all corpus embeddings using `CosineSimilarity`. The top-K most similar documents are selected as context.
+
+4. **Grounded generation** -- The retrieved documents are formatted into a prompt that instructs the model to answer using only the provided context. This grounds the model's response in factual content and reduces hallucination.
+
+## Production Considerations
+
+- **Vector store**: For large corpora, replace the in-memory similarity search with a vector database (e.g., Milvus, Weaviate, pgvector) that supports approximate nearest neighbor (ANN) search.
+- **Chunking**: Split long documents into overlapping chunks (e.g., 512 tokens with 64-token overlap) before embedding, so retrieval is more precise.
+- **Reranking**: After initial retrieval, use a cross-encoder or the model itself to rerank candidates for higher relevance.
+- **Hybrid search**: Combine embedding similarity with keyword search (BM25) for better recall on exact-match queries.
+
+## Related API Reference
+
+- [Generate API](/docs/api/generate/) -- generation options and `Chat` method
+- [Inference API](/docs/api/inference/) -- model loading and `Embed` method
+
+---
+
+
+## Speculative Decoding
+Source: cookbooks/speculative-decoding
+
+
+# Speculative Decoding
+
+Use a small "draft" model to propose tokens that the large "target" model verifies in parallel. When the draft model guesses correctly (which happens often for common token sequences), multiple tokens are accepted per forward pass, significantly increasing throughput.
+
+## Requirements
+
+- A large target model (e.g. Llama 3 8B)
+- A small draft model of the same family (e.g. Llama 3 1B)
+
+## Full Example
+
+```go
+// Recipe 09: Speculative Decoding
+//
+// Use a small "draft" model to propose tokens that the large "target" model
+// verifies in parallel. When the draft model guesses correctly (which happens
+// often), multiple tokens are accepted per forward pass, significantly
+// increasing throughput.
+//
+// Requirements:
+//   - A large target model (e.g. Llama 3 8B)
+//   - A small draft model of the same family (e.g. Llama 3 1B)
+//
+// Usage:
+//
+//	go run ./docs/cookbook/09-speculative-decoding/ \
+//	    --target path/to/llama-8b.gguf \
+//	    --draft path/to/llama-1b.gguf
+package main
+
+import (
+	"context"
+	"errors"
+	"flag"
+	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/zerfoo/zerfoo/inference"
+	"github.com/zerfoo/zerfoo/serve"
+)
+
+func main() {
+	targetPath := flag.String("target", "", "path to the large target model (GGUF)")
+	draftPath := flag.String("draft", "", "path to the small draft model (GGUF)")
+	device := flag.String("device", "cpu", `compute device: "cpu", "cuda"`)
+	port := flag.String("port", "8080", "listen port for the OpenAI-compatible API")
+	flag.Parse()
+
+	if *targetPath == "" || *draftPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: speculative-decoding --target <large.gguf> --draft <small.gguf>")
+		os.Exit(1)
+	}
+
+	// Load the target (verifier) model.
+	target, err := inference.LoadFile(*targetPath, inference.WithDevice(*device))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load target: %v\n", err)
+		os.Exit(1)
+	}
+	defer target.Close()
+
+	// Load the draft (proposer) model.
+	draft, err := inference.LoadFile(*draftPath, inference.WithDevice(*device))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load draft: %v\n", err)
+		os.Exit(1)
+	}
+	defer draft.Close()
+
+	tcfg := target.Config()
+	dcfg := draft.Config()
+	fmt.Fprintf(os.Stderr, "Target: %s (%d layers)\n", tcfg.Architecture, tcfg.NumLayers)
+	fmt.Fprintf(os.Stderr, "Draft:  %s (%d layers)\n", dcfg.Architecture, dcfg.NumLayers)
+
+	// Create a server with speculative decoding enabled.
+	// The serve package automatically uses the draft model for speculation
+	// when WithDraftModel is provided.
+	srv := serve.NewServer(target, serve.WithDraftModel(draft))
+
+	httpServer := &http.Server{
+		Addr:    net.JoinHostPort("", *port),
+		Handler: srv.Handler(),
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	errCh := make(chan error, 1)
+	go func() { errCh <- httpServer.ListenAndServe() }()
+
+	fmt.Fprintf(os.Stderr, "Speculative decoding server on http://localhost:%s\n", *port)
+
+	select {
+	case <-ctx.Done():
+		fmt.Fprintln(os.Stderr, "\nShutting down...")
+		httpServer.Shutdown(context.Background())
+	case err := <-errCh:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			fmt.Fprintf(os.Stderr, "server: %v\n", err)
+			os.Exit(1)
+		}
+	}
+}
+```
+
+## How It Works
+
+1. **Load two models** -- The target model is the large, high-quality model you want to serve. The draft model is a smaller, faster model from the same family that shares the same vocabulary.
+
+2. **Enable speculative decoding** -- Pass `serve.WithDraftModel(draft)` when creating the server. The serve package handles the speculation protocol automatically.
+
+3. **Speculation protocol** -- For each generation step:
+   - The draft model generates K candidate tokens autoregressively (fast, since it's small).
+   - The target model verifies all K candidates in a single batched forward pass.
+   - Accepted tokens are emitted immediately. On rejection, generation falls back to the target model's prediction.
+
+4. **Serve over HTTP** -- The server exposes an OpenAI-compatible `/v1/chat/completions` endpoint. Clients see no difference -- speculative decoding is transparent.
+
+## Choosing Draft and Target Models
+
+- The draft and target models should be from the **same family** (e.g., both Llama 3) and share the same tokenizer vocabulary.
+- A typical pairing is a 1B draft with an 8B target, or a 3B draft with a 70B target.
+- Speedup depends on the acceptance rate: 1.5-3x throughput improvement is typical for well-matched pairs.
+
+## Related API Reference
+
+- [Inference API](/docs/api/inference/) -- `inference.LoadFile` and device options
+- [Serve API](/docs/api/serve/) -- server configuration and `WithDraftModel`
+
+---
+
+
+## Streaming Chat
+Source: cookbooks/streaming-chat
+
+
+# Streaming Chat
+
+Stream tokens to the terminal as they are generated. This provides a responsive, ChatGPT-like experience where text appears incrementally.
+
+## Usage
+
+```bash
+go run ./docs/cookbook/02-streaming-chat/ --model path/to/model.gguf
+```
+
+## Full Code
+
+```go
+// Recipe 02: Streaming Chat
+//
+// Stream tokens to the terminal as they are generated. This provides a
+// responsive, ChatGPT-like experience where text appears incrementally.
+//
+// Usage:
+//
+//	go run ./docs/cookbook/02-streaming-chat/ --model path/to/model.gguf
+package main
+
+import (
+	"bufio"
+	"context"
+	"flag"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/zerfoo/zerfoo"
+)
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file or HuggingFace model ID")
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: streaming-chat --model <path-or-id>")
+		os.Exit(1)
+	}
+
+	m, err := zerfoo.Load(*modelPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer m.Close()
+
+	fmt.Println("Type a message and press Enter. Type 'quit' to exit.")
+
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Print("\n> ")
+		if !scanner.Scan() {
+			break
+		}
+		prompt := strings.TrimSpace(scanner.Text())
+		if prompt == "" {
+			continue
+		}
+		if prompt == "quit" {
+			break
+		}
+
+		// ChatStream returns a channel that yields tokens as they arrive.
+		stream, err := m.ChatStream(context.Background(), prompt,
+			zerfoo.WithGenMaxTokens(512),
+			zerfoo.WithGenTemperature(0.8),
+		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "stream: %v\n", err)
+			continue
+		}
+
+		for tok := range stream {
+			if tok.Done {
+				break
+			}
+			fmt.Print(tok.Text)
+		}
+		fmt.Println()
+	}
+}
+```
+
+## How It Works
+
+1. **Interactive loop** -- The program reads user input line by line from stdin, creating a simple REPL-style chat interface.
+2. **Streaming** -- `m.ChatStream` returns a Go channel that yields tokens as they are decoded. Each `tok` contains a `Text` field with the token string and a `Done` flag that signals generation is complete.
+3. **Incremental output** -- Tokens are printed immediately with `fmt.Print` (no newline), so text appears character-by-character as the model generates it.
+
+## See Also
+
+- [Basic Text Generation](/docs/cookbooks/basic-text-generation) -- non-streaming generation
+- [OpenAI Server](/docs/cookbooks/openai-server) -- serve streaming responses over HTTP with SSE
+
+---
+
+
+## Structured JSON Output
+Source: cookbooks/structured-json-output
+
+
+# Structured JSON Output
+
+Use grammar-guided decoding to guarantee the model outputs valid JSON that conforms to a schema. This eliminates the need for fragile regex parsing or retry loops when you need structured data from a language model.
+
+Two approaches are shown:
+
+1. **High-level** -- `zerfoo.WithSchema` (recommended for most use cases)
+2. **Low-level** -- `grammar.Convert` + `inference.WithGrammar` (for custom pipelines)
+
+## Usage
+
+```bash
+go run ./docs/cookbook/06-structured-json-output/ --model path/to/model.gguf
+go run ./docs/cookbook/06-structured-json-output/ --model path/to/model.gguf --low-level
+```
+
+## Full Code
+
+```go
+// Recipe 06: Structured JSON Output
+//
+// Use grammar-guided decoding to guarantee the model outputs valid JSON that
+// conforms to a schema. This eliminates the need for fragile regex parsing
+// or retry loops when you need structured data from a language model.
+//
+// Two approaches are shown:
+//  1. High-level: zerfoo.WithSchema (recommended for most use cases)
+//  2. Low-level: grammar.Convert + inference.WithGrammar (for custom pipelines)
+//
+// Usage:
+//
+//	go run ./docs/cookbook/06-structured-json-output/ --model path/to/model.gguf
+//	go run ./docs/cookbook/06-structured-json-output/ --model path/to/model.gguf --low-level
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/zerfoo/zerfoo"
+	"github.com/zerfoo/zerfoo/generate/grammar"
+	"github.com/zerfoo/zerfoo/inference"
+)
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file or HuggingFace model ID")
+	prompt := flag.String("prompt", "Generate a JSON object for a city: Paris, population 2.1 million, country France.", "generation prompt")
+	lowLevel := flag.Bool("low-level", false, "use low-level grammar.Convert + inference.WithGrammar")
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: structured-json-output --model <path> [--low-level]")
+		os.Exit(1)
+	}
+
+	// Define the JSON schema. The model's output is constrained to this shape.
+	schema := grammar.JSONSchema{
+		Type: "object",
+		Properties: map[string]*grammar.JSONSchema{
+			"name":       {Type: "string"},
+			"population": {Type: "number"},
+			"country":    {Type: "string"},
+		},
+		Required: []string{"name", "population", "country"},
+	}
+
+	if *lowLevel {
+		runLowLevel(*modelPath, *prompt, &schema)
+	} else {
+		runHighLevel(*modelPath, *prompt, schema)
+	}
+}
+
+// runHighLevel uses the one-line zerfoo.WithSchema option.
+func runHighLevel(modelPath, prompt string, schema grammar.JSONSchema) {
+	m, err := zerfoo.Load(modelPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer m.Close()
+
+	result, err := m.Generate(context.Background(), prompt,
+		zerfoo.WithSchema(schema),
+		zerfoo.WithGenMaxTokens(128),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(result.Text)
+}
+
+// runLowLevel converts the schema to a grammar and passes it to the inference
+// package directly. Use this when you need full control over the pipeline.
+func runLowLevel(modelPath, prompt string, schema *grammar.JSONSchema) {
+	// Convert JSON schema to a grammar state machine.
+	g, err := grammar.Convert(schema)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "grammar convert: %v\n", err)
+		os.Exit(1)
+	}
+
+	model, err := inference.LoadFile(modelPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer model.Close()
+
+	text, err := model.Generate(context.Background(), prompt,
+		inference.WithMaxTokens(128),
+		inference.WithGrammar(g),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(text)
+}
+```
+
+## How It Works
+
+### High-Level Approach
+
+`zerfoo.WithSchema` is the simplest way to get structured output. Pass a `grammar.JSONSchema` and the framework handles schema-to-grammar conversion and constrained decoding automatically. Every token the model generates is validated against the schema, so the output is guaranteed to be valid JSON with the specified fields.
+
+### Low-Level Approach
+
+For custom pipelines, the `grammar` package exposes the conversion step directly:
+
+1. **Schema definition** -- Define a `grammar.JSONSchema` with the expected type, properties, and required fields.
+2. **Grammar conversion** -- `grammar.Convert` compiles the JSON schema into a grammar state machine that constrains which tokens can appear at each position.
+3. **Constrained decoding** -- `inference.WithGrammar` passes the compiled grammar to the decoder, which masks out invalid tokens at each step.
+
+### When to Use Each
+
+| Approach | Use case |
+|----------|----------|
+| `zerfoo.WithSchema` | Most applications -- simple, one-line integration |
+| `grammar.Convert` + `inference.WithGrammar` | Custom inference pipelines, reusing compiled grammars across requests, or combining with other inference options |
+
+## See Also
+
+- [Basic Text Generation](/docs/cookbooks/basic-text-generation) -- unconstrained text generation
+- [Custom Sampling](/docs/cookbooks/custom-sampling) -- control randomness with temperature, top-K, and top-P
+
+---
+
+
+## Tool Calling
+Source: cookbooks/tool-calling
+
+
+# Tool / Function Calling
+
+Let the model decide when to invoke tools (functions). The application defines a set of tools, the model generates a tool call, the application executes it, and feeds the result back for a final natural-language answer.
+
+This is the core pattern behind agentic systems that combine LLM reasoning with real-world actions (API calls, database queries, calculations, etc.).
+
+## Full Example
+
+```go
+// Recipe 10: Tool / Function Calling
+//
+// Let the model decide when to invoke tools (functions). The application
+// defines a set of tools, the model generates a tool call, the application
+// executes it, and feeds the result back for a final natural-language answer.
+//
+// This is the core pattern behind agentic systems that combine LLM reasoning
+// with real-world actions (API calls, database queries, calculations, etc.).
+//
+// Usage:
+//
+//	go run ./docs/cookbook/10-tool-calling/ --model path/to/model.gguf
+//	go run ./docs/cookbook/10-tool-calling/ --model path/to/model.gguf --query "What time is it in London?"
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/zerfoo/zerfoo"
+	"github.com/zerfoo/zerfoo/serve"
+)
+
+func main() {
+	modelPath := flag.String("model", "", "path to GGUF model file or HuggingFace model ID")
+	query := flag.String("query", "What time is it in Tokyo?", "user query")
+	flag.Parse()
+
+	if *modelPath == "" {
+		fmt.Fprintln(os.Stderr, "usage: tool-calling --model <path> [--query <text>]")
+		os.Exit(1)
+	}
+
+	m, err := zerfoo.Load(*modelPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer m.Close()
+
+	// Define tools using the OpenAI function-calling schema.
+	tools := []serve.Tool{
+		{
+			Type: "function",
+			Function: serve.ToolFunction{
+				Name:        "get_current_time",
+				Description: "Get the current time in a given timezone.",
+				Parameters: json.RawMessage(`{
+					"type": "object",
+					"properties": {
+						"timezone": {
+							"type": "string",
+							"description": "IANA timezone name, e.g. America/New_York"
+						}
+					},
+					"required": ["timezone"]
+				}`),
+			},
+		},
+		{
+			Type: "function",
+			Function: serve.ToolFunction{
+				Name:        "lookup_word",
+				Description: "Look up the definition of an English word.",
+				Parameters: json.RawMessage(`{
+					"type": "object",
+					"properties": {
+						"word": {"type": "string", "description": "The word to look up"}
+					},
+					"required": ["word"]
+				}`),
+			},
+		},
+	}
+
+	fmt.Fprintf(os.Stderr, "Query: %s\n\n", *query)
+
+	// Step 1: Ask the model to decide which tool to call.
+	result, err := m.Generate(context.Background(), *query,
+		zerfoo.WithTools(tools...),
+		zerfoo.WithGenMaxTokens(256),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Step 2: If no tool call, the model answered directly.
+	if len(result.ToolCalls) == 0 {
+		fmt.Println("Direct answer:", result.Text)
+		return
+	}
+
+	// Step 3: Execute the tool call.
+	tc := result.ToolCalls[0]
+	fmt.Printf("Tool call: %s(%s)\n", tc.FunctionName, string(tc.Arguments))
+
+	toolResult := dispatch(tc.FunctionName, tc.Arguments)
+	fmt.Printf("Tool result: %s\n\n", toolResult)
+
+	// Step 4: Feed the result back for a natural-language answer.
+	followUp := fmt.Sprintf(
+		"The user asked: %s\nYou called %s and got: %s\nProvide a helpful answer.",
+		*query, tc.FunctionName, toolResult,
+	)
+	final, err := m.Generate(context.Background(), followUp, zerfoo.WithGenMaxTokens(256))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "follow-up: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Answer:", final.Text)
+}
+
+// dispatch executes a tool call locally.
+func dispatch(name string, args json.RawMessage) string {
+	switch name {
+	case "get_current_time":
+		var p struct {
+			Timezone string `json:"timezone"`
+		}
+		if err := json.Unmarshal(args, &p); err != nil {
+			return fmt.Sprintf(`{"error":%q}`, err)
+		}
+		loc, err := time.LoadLocation(p.Timezone)
+		if err != nil {
+			return fmt.Sprintf(`{"error":%q}`, err)
+		}
+		return fmt.Sprintf(`{"timezone":%q,"time":%q}`, p.Timezone, time.Now().In(loc).Format(time.RFC3339))
+
+	case "lookup_word":
+		var p struct {
+			Word string `json:"word"`
+		}
+		if err := json.Unmarshal(args, &p); err != nil {
+			return fmt.Sprintf(`{"error":%q}`, err)
+		}
+		// Placeholder dictionary.
+		return fmt.Sprintf(`{"word":%q,"definition":"(definition would come from a real dictionary API)"}`, p.Word)
+
+	default:
+		return fmt.Sprintf(`{"error":"unknown tool: %s"}`, name)
+	}
+}
+```
+
+## How It Works
+
+1. **Define tools** -- Tools are described using the OpenAI function-calling schema (`serve.Tool`). Each tool has a name, description, and a JSON Schema for its parameters. The model uses these descriptions to decide when and how to call a tool.
+
+2. **First generation** -- Pass the user's query along with `zerfoo.WithTools(tools...)`. The model either answers directly or emits a structured tool call in `result.ToolCalls`.
+
+3. **Execute the tool** -- The `dispatch` function routes the tool call to the appropriate handler. In this example, `get_current_time` returns the current time in a timezone, and `lookup_word` returns a dictionary definition.
+
+4. **Second generation** -- Feed the tool result back to the model as a follow-up prompt. The model incorporates the tool output into a natural-language answer for the user.
+
+## Extending the Pattern
+
+- **Multi-turn tool use**: Loop the generate-dispatch-generate cycle to support multi-step reasoning where the model calls multiple tools in sequence.
+- **Parallel tool calls**: Some models emit multiple tool calls in a single response. Check `result.ToolCalls` for all of them and execute in parallel.
+- **Validation**: Always validate tool call arguments before executing. The model may produce malformed JSON or unexpected parameter values.
+
+## Related API Reference
+
+- [Generate API](/docs/api/generate/) -- `WithTools` and tool call result types
+- [Serve API](/docs/api/serve/) -- `serve.Tool` and `serve.ToolFunction` schemas
+
+---
+
+
+## Vision / Multimodal
+Source: cookbooks/vision-multimodal
+
+
+# Vision / Multimodal Inference
+
+Analyze images using a vision-capable GGUF model. The image is passed alongside a text prompt using the `inference.Message` API, the same format used by the OpenAI-compatible `/v1/chat/completions` endpoint.
+
+## Requirements
+
+- A vision-capable GGUF model (e.g. LLaVA, Gemma 3 with vision encoder)
+
+## Full Example
+
+```go
+// Recipe 12: Vision / Multimodal Inference
+//
+// Analyze images using a vision-capable GGUF model. The image is passed
+// alongside a text prompt using the inference.Message API, the same format
+// used by the OpenAI-compatible /v1/chat/completions endpoint.
+//
+// Requirements:
+//   - A vision-capable GGUF model (e.g. LLaVA, Gemma 3 with vision encoder)
+//
+// Usage:
+//
+//	go run ./docs/cookbook/12-vision-multimodal/ --model path/to/vision-model.gguf --image photo.jpg
+//	go run ./docs/cookbook/12-vision-multimodal/ --model path/to/vision-model.gguf --image photo.jpg --prompt "Count the objects"
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/zerfoo/zerfoo/inference"
+)
+
+func main() {
+	modelPath := flag.String("model", "", "path to a vision-capable GGUF model")
+	device := flag.String("device", "cpu", `compute device: "cpu", "cuda"`)
+	imagePath := flag.String("image", "", "path to an image file (JPEG or PNG)")
+	prompt := flag.String("prompt", "Describe this image in detail.", "question about the image")
+	maxTokens := flag.Int("max-tokens", 512, "maximum tokens to generate")
+	flag.Parse()
+
+	if *modelPath == "" || *imagePath == "" {
+		fmt.Fprintln(os.Stderr, "usage: vision-multimodal --model <model.gguf> --image <image.jpg>")
+		os.Exit(1)
+	}
+
+	// Read the image file into memory.
+	imageData, err := os.ReadFile(*imagePath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "read image: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stderr, "Image: %s (%d bytes)\n", *imagePath, len(imageData))
+
+	// Load the vision-capable model.
+	model, err := inference.LoadFile(*modelPath, inference.WithDevice(*device))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "load: %v\n", err)
+		os.Exit(1)
+	}
+	defer model.Close()
+
+	cfg := model.Config()
+	fmt.Fprintf(os.Stderr, "Model: %s (%d layers)\n", cfg.Architecture, cfg.NumLayers)
+
+	// Build a chat message with the image embedded.
+	// The Images field carries raw image bytes, matching the OpenAI vision API.
+	messages := []inference.Message{
+		{
+			Role:    "user",
+			Content: *prompt,
+			Images:  [][]byte{imageData},
+		},
+	}
+
+	resp, err := model.Chat(context.Background(), messages,
+		inference.WithMaxTokens(*maxTokens),
+		inference.WithTemperature(0.5),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(resp.Content)
+}
+```
+
+## How It Works
+
+1. **Read the image** -- The image file (JPEG or PNG) is read into a byte slice with `os.ReadFile`. No preprocessing is needed -- the model handles decoding and resizing internally.
+
+2. **Load a vision model** -- Use `inference.LoadFile` with a vision-capable GGUF model. Models like LLaVA and Gemma 3 with vision encoders include both a vision tower (image encoder) and a language model in a single GGUF file.
+
+3. **Build a multimodal message** -- The `inference.Message` struct accepts both text (`Content`) and images (`Images` as raw bytes). This mirrors the OpenAI chat completions API where images are passed inline.
+
+4. **Generate** -- `model.Chat` processes the image through the vision encoder, projects the image embeddings into the language model's space, and generates a text response conditioned on both the image and the text prompt.
+
+## Supported Vision Models
+
+| Model | Architecture | Notes |
+|-------|-------------|-------|
+| LLaVA | LLaVA | CLIP vision encoder + Llama language model |
+| Gemma 3 (with vision) | Gemma 3 | SigLIP vision encoder + Gemma language model |
+
+## Use Cases
+
+- **Image captioning**: "Describe this image in detail."
+- **Visual question answering**: "How many people are in this photo?"
+- **Document understanding**: "Extract the text from this receipt."
+- **Object detection**: "List all objects visible in this image."
+
+## Related API Reference
+
+- [Inference API](/docs/api/inference/) -- `inference.LoadFile`, `inference.Message`, and `model.Chat`
+- [Serve API](/docs/api/serve/) -- the `/v1/chat/completions` endpoint accepts images via the OpenAI vision API format
+
+---
+
+
+## GPU Setup
+Source: architecture/gpu-setup
+
+
+# GPU Setup Guide
+
+Zerfoo supports GPU acceleration through three backends: NVIDIA CUDA, AMD ROCm, and OpenCL (via CLBlast). GPU support is entirely optional -- `go build ./...` produces a working CPU-only binary with zero configuration.
+
+## Supported GPUs
+
+| Backend | Vendor | Library | Loaded Via |
+|---------|--------|---------|------------|
+| CUDA | NVIDIA | `libcudart.so`, `libcublas.so`, `libcudnn.so` | purego/dlopen |
+| ROCm | AMD | `libamdhip64.so`, `librocblas.so`, `libMIOpen.so` | purego/dlopen |
+| OpenCL | Any | `libOpenCL.so` (+ CLBlast) | purego/dlopen |
+
+Tested hardware includes NVIDIA DGX Spark, RTX 4090, A100, and H100 GPUs. AMD MI250X and MI300X are supported via ROCm. Any GPU with OpenCL support can use the CLBlast backend.
+
+## How GPU Detection Works (purego/dlopen)
+
+Zerfoo uses **purego/dlopen** to load GPU libraries at runtime. There are no build tags required for GPU support -- the same binary works on machines with or without a GPU.
+
+At startup, Zerfoo calls `dlopen("libcudart.so")` (or the equivalent for ROCm/OpenCL). If the shared library is found, all CUDA runtime function pointers are resolved via `dlsym`. If the library is not found, Zerfoo falls back to CPU execution silently.
+
+This means:
+
+- **No CGo** -- GPU calls go through resolved function pointers, not `cgo` wrappers. Zero `runtime.cgocall` overhead.
+- **No build tags** -- You do not need `-tags cuda` to build a GPU-capable binary. The default `go build ./...` produces a binary that detects GPUs at runtime.
+- **Graceful fallback** -- If CUDA is not installed, `cuda.Available()` returns `false` and the engine falls back to CPU. No crashes, no missing symbol errors.
+
+The detection flow:
+
+```
+1. dlopen("libcudart.so.12") or dlopen("libcudart.so")
+2. dlsym each required symbol (cudaMalloc, cudaFree, cudaMemcpy, ...)
+3. Optionally resolve CUDA graph symbols (cudaStreamBeginCapture, ...)
+4. cuda.Available() returns true if all required symbols resolved
+```
+
+## CUDA Setup (NVIDIA)
+
+### Prerequisites
+
+- NVIDIA GPU with compute capability 5.0+
+- NVIDIA driver 525+ (CUDA 12.x compatible)
+- CUDA Toolkit 12.0 or later (`libcudart.so.12` must be on the library path)
+
+### Verify GPU and driver
+
+```bash
+nvidia-smi
+```
+
+Expected output shows your GPU model, driver version, and CUDA version:
+
+```
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 560.35.03              Driver Version: 560.35.03      CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|=========================================+========================+======================|
+|   0  GR Blackwell                  On   | 00000009:01:00.0  Off  |                    0 |
+| N/A   40C    P0              18W / 100W |       0MiB / 131072MiB |      0%      Default |
++-----------------------------------------+------------------------+----------------------+
+```
+
+### Verify CUDA toolkit
+
+```bash
+nvcc --version
+```
+
+### Verify CUDA is visible to Zerfoo
+
+Run a quick Go program to check:
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/zerfoo/zerfoo/internal/cuda"
+)
+
+func main() {
+    fmt.Println("CUDA available:", cuda.Available())
+    if cuda.Available() {
+        count, _ := cuda.GetDeviceCount()
+        fmt.Println("Device count:", count)
+    }
+}
+```
+
+Or from the CLI:
+
+```bash
+zerfoo run gemma-3-1b-q4  # defaults to CPU
+```
+
+To force GPU usage via the library API:
+
+```go
+mdl, err := inference.LoadFile("/path/to/model.gguf",
+    inference.WithDevice("cuda"),      // use GPU 0
+    inference.WithDevice("cuda:1"),    // use GPU 1
+)
+```
+
+### cuBLAS
+
+cuBLAS is included with the CUDA Toolkit. Zerfoo uses it for GEMM/GEMV operations. No additional installation needed.
+
+### cuDNN
+
+cuDNN provides accelerated convolution, batch norm, activation, pooling, and softmax operations. Install from the NVIDIA cuDNN archive:
+
+```bash
+# Ubuntu/Debian (CUDA 12)
+sudo apt install libcudnn8 libcudnn8-dev
+
+# Or download from NVIDIA: https://developer.nvidia.com/cudnn
+```
+
+cuDNN operations in Zerfoo are non-interface methods on `*GPUEngine` (not part of `Engine[T]`). Layers that want cuDNN acceleration type-assert to `*GPUEngine` and call these methods directly:
+
+- `Conv2dForward` -- cuDNN convolution with grouped conv, bias, IMPLICIT_GEMM
+- `BatchNormForwardInference` -- spatial batch norm
+- `CudnnActivationForward` -- ReLU, Sigmoid, Tanh
+- `CudnnPoolingForward` -- Max, AvgIncPad, AvgExcPad
+- `CudnnSoftmaxForward` -- channel-mode softmax
+
+### Building custom CUDA kernels
+
+Zerfoo ships 25+ hand-written CUDA kernels for fused operations (RMSNorm, SwiGLU, RoPE, flash attention, quantized GEMM/GEMV). To build the custom kernel shared library:
+
+```bash
+cd internal/cuda/kernels && make shared && cd ../../../
+```
+
+This produces `libkernels.so`, which is loaded at runtime via `dlopen`. The kernels are optional -- without them, Zerfoo falls back to cuBLAS and element-wise GPU operations.
+
+### NCCL (multi-GPU gradient exchange)
+
+For distributed training with GPU-native gradient exchange, install NCCL:
+
+```bash
+# Ubuntu/Debian
+sudo apt install libnccl2 libnccl-dev
+```
+
+NCCL enables direct GPU-to-GPU collective operations (AllReduce, Broadcast, Barrier) without CPU involvement. The `NcclStrategy[T]` in the `distributed/` package uses NCCL for intra-node GPU-GPU communication and falls back to gRPC for inter-node transport.
+
+### TensorRT (optional)
+
+TensorRT provides inference optimization via graph-to-TRT conversion, engine caching, and half-precision builds:
+
+```go
+mdl, err := inference.LoadFile("/path/to/model.gguf",
+    inference.WithBackend("tensorrt"),
+    inference.WithPrecision("fp16"),
+)
+```
+
+- Engine cache stored at `~/.cache/zerfoo/tensorrt/` (keyed by modelID, precision, gpuArch)
+- Returns `UnsupportedOpError` for ops not yet mapped to TRT layers
+
+## ROCm Setup (AMD)
+
+### Prerequisites
+
+- AMD GPU (MI250X, MI300X, or other ROCm-supported cards)
+- ROCm 6.0+ (`libamdhip64.so`, `librocblas.so`, `libMIOpen.so`)
+
+### Verify GPU
+
+```bash
+rocm-smi
+```
+
+Expected output:
+
+```
+========================= ROCm System Management Interface =========================
+================================ Concise Info =======================================
+GPU  Temp   AvgPwr  SCLK    MCLK    Fan   Perf  PwrCap  VRAM%  GPU%
+0    42.0c  30.0W   800Mhz  1600Mhz 0%    auto  300.0W  0%     0%
+=====================================================================================
+```
+
+### Verify ROCm version
+
+```bash
+cat /opt/rocm/.info/version
+# 6.0.0
+```
+
+### Use ROCm in Zerfoo
+
+```go
+mdl, err := inference.LoadFile("/path/to/model.gguf",
+    inference.WithDevice("rocm"),
+)
+
+---
+
+
+## Architecture Overview
+Source: architecture/overview
+
+
+# Architecture Overview
+
+This page walks through how Zerfoo works end-to-end, from loading a GGUF
+model file to streaming tokens over an OpenAI-compatible API. It targets new
+contributors who want to understand the codebase before making changes.
+
+
+## Engine[T] — The Compute Abstraction
+
+**Rule: all tensor arithmetic flows through `compute.Engine[T]`. No layer ever
+operates on raw slices directly.**
+
+`Engine[T]` is defined in `github.com/zerfoo/ztensor/compute` and provides
+operations like `MatMul`, `Add`, `Reshape`, `Softmax`, `Transpose`, and more.
+There are three implementations:
+
+| Implementation | Package | Backend |
+|---------------|---------|---------|
+| `CPUEngine[T]` | `compute/` | Pure Go + ARM NEON / AVX2 SIMD |
+| `GPUEngine[T]` | `compute/` | CUDA via purego (dlopen, no CGo) |
+| `EngineProxy[T]` | `compute/` | Wraps any engine; records op traces for compilation |
+
+Why this matters for contributors:
+
+- **Testability.** Every layer can be tested on CPU without a GPU. Write your
+  test with `CPUEngine`, and the same code runs on `GPUEngine` in CI.
+- **CUDA graph capture.** The proxy records which engine operations are called
+  during a forward pass. This trace is what enables CUDA graph capture later.
+- **No CGo.** GPU bindings use `purego` (dlopen at runtime). A plain
+  `go build ./...` compiles everywhere. CUDA is only needed at runtime.
+
+The engine is created in `inference/engine.go:createEngine()`:
+
+```go
+func createEngine(device string) (compute.Engine[float32], error) {
+    switch devType {
+    case "cpu":
+        return compute.NewCPUEngine[float32](numeric.Float32Ops{}), nil
+    case "cuda":
+        return compute.NewGPUEngine[float32](numeric.Float32Ops{}, deviceID)
+    }
+}
+```
+
+
+## Architecture Registry and Graph Builders
+
+Zerfoo supports multiple model architectures through a registry pattern.
+
+### The Registry
+
+```go
+type ArchBuilder func(
+    tensors map[string]*tensor.TensorNumeric[float32],
+    cfg     *gguf.ModelConfig,
+    engine  compute.Engine[float32],
+) (*graph.Graph[float32], *tensor.TensorNumeric[float32], error)
+```
+
+Each architecture registers a builder function at init time:
+
+```go
+// inference/registry_init.go
+func init() {
+    RegisterArchitecture("llama", buildLlamaGraph)
+    RegisterArchitecture("gemma", buildGemmaGraph)
+    RegisterArchitecture("gemma3", buildGemmaGraph)
+    RegisterArchitecture("qwen2", buildQwenGraph)
+    RegisterArchitecture("mistral", buildMistralGraph)
+    RegisterArchitecture("phi", buildPhiGraph)
+    RegisterArchitecture("deepseek_v3", buildDeepSeekGraph)
+    RegisterArchitecture("mamba", buildMambaGraph)
+    RegisterArchitecture("jamba", buildJambaGraph)
+    RegisterArchitecture("whisper", buildWhisperGraph)
+    // ...
+}
+```
+
+The `general.architecture` field in the GGUF metadata determines which builder
+is invoked. `buildArchGraph()` dispatches to the correct builder via a switch
+statement (with special-case detection -- e.g., Mistral models report
+`arch="llama"` but are detected by their non-zero sliding window).
+
+### How a Builder Works
+
+Most decoder-only architectures share the same transformer body. The shared
+logic lives in `buildTransformerGraph()`, which constructs:
+
+```
+Embed -> [RMSNorm -> GQA -> Add -> RMSNorm -> FFN(SiLU-gate) -> Add] x N -> RMSNorm -> LMHead
+```
+
+Architecture-specific builders (e.g., `buildGemmaGraph`, `buildLlamaGraph`)
+call `buildTransformerGraph()` with different options:
+
+| Option | Used By | Effect |
+|--------|---------|--------|
+| `embedScale` | Gemma | Multiply embeddings by sqrt(hidden_size) |
+| `postNorm` | Gemma 3 | Add post-attention and post-FFN RMSNorm |
+| `qkNorm` | Gemma 3 | Apply RMSNorm to Q/K after projection |
+| `logitSoftcap` | Gemma 3 | cap * tanh(logit/cap) on output logits |
+| `slidingWindowSize` | Mistral | Sliding window attention mask |
+| `attnBias` | Qwen 2 | Add bias to Q/K/V projections |
+| `partialRotaryFactor` | Phi | Apply RoPE to only a fraction of head dims |
+
+The per-layer construction in `buildTransformerGraph()`:
+
+```mermaid
+flowchart TD
+    H[hidden state] --> N1[RMSNorm]
+    N1 --> QKV[Q/K/V Dense projections]
+    QKV --> ROPE[RoPE positional encoding]
+    ROPE --> GQA[Grouped Query Attention + KV Cache]
+    GQA --> ADD1[Residual Add]
+    ADD1 --> N2[RMSNorm]
+    N2 --> FFN[FFN: gate * SiLU + up, then down]
+    FFN --> ADD2[Residual Add]
+    ADD2 --> H2[next layer hidden state]
+```
+
+### Adding a New Architecture
+
+1. Create `inference/arch_yourmodel.go` with a `buildYourModelGraph()` function
+2. If it follows the standard transformer pattern, call `buildTransformerGraph()`
+   with appropriate `transformerGraphOpts`
+3. Register it in `inference/registry_init.go`
+4. Add a test in `inference/arch_yourmodel_test.go`
+
+
+## CUDA Graph Capture
+
+CUDA graph capture is what gives Zerfoo near-zero kernel launch overhead during
+decode. It achieves 99.5% instruction coverage on the GGUF inference path.
+
+### How It Works
+
+After graph compilation produces an `ExecutionPlan`, the system checks whether
+CUDA graphs are available:
+
+```go
+// generate/generator.go — inside compileGraph()
+if cuda.Available() && cuda.Lib().GraphAvailable() {
+    ge := graph.NewCUDAGraphExecutor[T](compiled, streamPtr, 2, onCaptured, snapshotCache)
+    compiled.SetMegakernelFn(func(ctx context.Context, inputs ...) {
+        return ge.Run(ctx, inputs...)
+    })
+}
+```
+
+The `CUDAGraphExecutor`:
+
+1. **Captures** the entire decode step as a CUDA graph -- all GPU kernel
+   launches are recorded into a single replayable graph
+2. **Replays** the captured graph on each subsequent decode step, replacing
+   individual kernel launches with a single graph launch
+3. **Protects GPU memory** -- after capture, the arena's reset floor is raised
+   so `ResetPool()` doesn't reclaim buffers that the graph references
+4. **Handles capture failure** -- if capture fails, KV cache state is restored
+   from a snapshot and execution falls back to running instructions directly
+
+### Why Sessions Are Pooled
+
+CUDA graph capture records GPU pointer addresses. If a new session allocates
+different GPU buffers, the captured graph's pointers become invalid. The
+`Model.sessionPool` reuses sessions to keep GPU addresses stable across calls:
+
+```go
+// inference/inference.go
+sessionPool chan *generate.InferenceSession[float32]
+```
+
+### Disabling CUDA Graphs
+
+Set `ZERFOO_DISABLE_CUDA_GRAPH=1` to fall back to instruction-by-instruction
+execution. Useful for debugging or when CUDA graph capture is unstable.
+
+
+## Token Streaming
+
+The `TokenStream` interface in `generate/stream.go` delivers tokens as they
+are generated:
+
+```go
+type TokenStream interface {
+    OnToken(token string, done bool) error
+}
+```
+
+`GenerateStream()` follows the same prefill-then-decode pattern as `Generate()`
+but calls `stream.OnToken()` after each sampled token. Returning a non-nil
+error from `OnToken()` stops generation (used for client disconnects).
+
+
+## Package Map
+
+A quick reference for where to find things:
+
+```
+zerfoo/
+
+---
+
+
+## Enterprise Deployment
+Source: deployment/enterprise
+
+
+# Enterprise Deployment Guide
+
+This guide covers deploying Zerfoo in production-grade enterprise environments:
+Kubernetes with Helm and the ZerfooInferenceService operator, multi-GPU inference,
+TLS/mTLS, Prometheus monitoring, adaptive batching, auto-scaling, model repositories,
+multi-model serving with LRU eviction, security hardening, and troubleshooting.
+
+For single-node deployments with systemd and nginx, see the
+[Production Deployment Guide]({{< relref "production" >}}).
+
+
+## 2. Installation
+
+### Pre-built Container Images
+
+```bash
+# Pull the latest release image
+docker pull ghcr.io/zerfoo/zerfoo:latest
+
+# Or pin to a specific version
+docker pull ghcr.io/zerfoo/zerfoo:0.1.0
+```
+
+The container image includes the `zerfoo` binary with all CLI commands
+(`serve`, `run`, `pull`, `predict`, `tokenize`, `worker`).
+
+### Building from Source
+
+```bash
+# CPU-only build (zero CGo, compiles everywhere)
+go build -o zerfoo ./cmd/zerfoo
+
+# Build container image
+docker build -t ghcr.io/zerfoo/zerfoo:custom .
+```
+
+No build tags are required for CPU-only operation. GPU acceleration is loaded
+dynamically at runtime when CUDA libraries are available on the host.
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zerfoo-server
+  namespace: zerfoo-system
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: zerfoo-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: zerfoo-server
+subjects:
+  - kind: ServiceAccount
+    name: zerfoo-server
+    namespace: zerfoo-system
+```
+
+The Helm chart creates a dedicated ServiceAccount with
+`automountServiceAccountToken: false` by default.
+
+For the operator, create a scoped Role:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: zerfoo-operator
+  namespace: zerfoo
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "create", "update"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "create", "update"]
+  - apiGroups: ["zerfoo.feza.ai"]
+    resources: ["zerfooinferenceservices"]
+    verbs: ["get", "list", "watch", "update"]
+```
+
+### Deployment Manifest
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zerfoo-gemma-3-7b
+  namespace: zerfoo-system
+  labels:
+    app: zerfoo
+    model: gemma-3-7b
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zerfoo
+      model: gemma-3-7b
+  template:
+    metadata:
+      labels:
+        app: zerfoo
+        model: gemma-3-7b
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: zerfoo-server
+      runtimeClassName: nvidia   # omit for CPU-only
+      containers:
+        - name: zerfoo
+          image: ghcr.io/zerfoo/zerfoo:v1.0.0
+          command: ["zerfoo", "serve"]
+          args:
+            - "google/gemma-3-7b-it-q4_k_m"
+            - "--port"
+            - "8080"
+            - "--cache-dir"
+            - "/models"
+            # For multi-GPU, add: --gpus 0,1
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: health
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - name: GOMAXPROCS
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.cpu
+                  divisor: "1"
+          resources:
+            requests:
+              cpu: "4"
+              memory: "16Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: "24Gi"
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: models
+              mountPath: /models
+              readOnly: true
+            - name: tls-certs
+              mountPath: /etc/zerfoo/tls
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 60
+            periodSeconds: 5
+            failureThreshold: 6
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: zerfoo-models
+        - name: tls-certs
+          secret:
+            secretName: zerfoo-tls
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: zerfoo
+              model: gemma-3-7b
+```
+
+Adjust `livenessProbe.initialDelaySeconds` based on model size -- larger models
+take longer to load into GPU memory. A 70B model on a single GPU may need
+60-120 seconds.
+
+### Service and Ingress
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: zerfoo-gemma-3-7b
+  namespace: zerfoo-system
+spec:
+  selector:
+    app: zerfoo
+
+---
+
+
+## Production Deployment
+Source: deployment/production
+
+
+# Production Deployment Guide
+
+This guide covers deploying `zerfoo serve` in production with TLS, monitoring,
+and reverse proxy configuration.
+
+## Quick Start
+
+```bash
+zerfoo serve google/gemma-3-1b --port 8080
+```
+
+This starts an OpenAI-compatible API server on port 8080 with the following
+endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/chat/completions` | POST | Chat completion (streaming/non-streaming) |
+| `/v1/completions` | POST | Text completion (streaming/non-streaming) |
+| `/v1/embeddings` | POST | Text embeddings |
+| `/v1/models` | GET | List loaded models |
+| `/v1/models/{id}` | GET/DELETE | Get or unload a model |
+| `/metrics` | GET | Prometheus metrics |
+| `/openapi.yaml` | GET | OpenAPI specification |
+
+### CLI Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--port` | `8080` | Listen port |
+| `--cache-dir` | System default | Override model cache directory |
+
+## TLS / mTLS
+
+The serve package returns a standard `http.Handler`. To enable TLS, wrap it
+with Go's `tls.Config` or terminate TLS at your reverse proxy (see nginx
+section below).
+
+For direct TLS termination at the application level, embed the server in a
+custom `main.go`:
+
+```go
+srv := serve.NewServer(model,
+    serve.WithLogger(logger),
+    serve.WithMetrics(collector),
+)
+httpServer := &http.Server{
+    Addr:    ":8443",
+    Handler: srv.Handler(),
+    TLSConfig: &tls.Config{
+        MinVersion: tls.VersionTLS13,
+    },
+}
+httpServer.ListenAndServeTLS("server.crt", "server.key")
+```
+
+For mTLS (mutual TLS), add client certificate verification:
+
+```go
+caCert, _ := os.ReadFile("ca.crt")
+caCertPool := x509.NewCertPool()
+caCertPool.AppendCertsFromPEM(caCert)
+
+tlsConfig := &tls.Config{
+    MinVersion: tls.VersionTLS13,
+    ClientAuth: tls.RequireAndVerifyClientCert,
+    ClientCAs:  caCertPool,
+}
+```
+
+## Prometheus Metrics
+
+The `GET /metrics` endpoint exposes metrics in Prometheus text exposition
+format. Available metrics:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `requests_total` | Counter | Total completed requests |
+| `tokens_generated_total` | Counter | Total tokens generated |
+| `tokens_per_second` | Gauge | Rolling token generation rate |
+| `request_latency_ms` | Histogram | Request latency (buckets: 10, 50, 100, 250, 500, 1000, 2500, 5000, 10000 ms) |
+
+Prometheus scrape config:
+
+```yaml
+scrape_configs:
+  - job_name: zerfoo
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: /metrics
+```
+
+## Graceful Shutdown
+
+The server uses a `shutdown.Coordinator` that closes components in reverse
+registration order when the process receives SIGINT or SIGTERM:
+
+1. The HTTP server stops accepting new connections.
+2. In-flight requests are allowed to complete.
+3. The batch scheduler (if attached) is drained and stopped.
+4. The model is closed and GPU memory is released.
+
+No special configuration is needed -- the CLI wires this automatically.
+
+## systemd Unit File
+
+```ini
+[Unit]
+Description=Zerfoo Inference Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=zerfoo
+Group=zerfoo
+ExecStart=/usr/local/bin/zerfoo serve google/gemma-3-1b --port 8080
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+Environment=HOME=/var/lib/zerfoo
+WorkingDirectory=/var/lib/zerfoo
+
+# GPU access
+SupplementaryGroups=video render
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/zerfoo
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now zerfoo
+sudo journalctl -u zerfoo -f
+```
+
+## Reverse Proxy (nginx)
+
+```nginx
+upstream zerfoo {
+    server 127.0.0.1:8080;
+    keepalive 32;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
+
+    ssl_certificate     /etc/ssl/certs/api.example.com.crt;
+    ssl_certificate_key /etc/ssl/private/api.example.com.key;
+    ssl_protocols       TLSv1.3;
+
+    # Streaming support -- disable buffering for SSE
+    proxy_buffering off;
+    proxy_cache off;
+
+    # Timeouts for long-running inference requests
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+
+    location / {
+        proxy_pass http://zerfoo;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+    }
+
+    # Metrics -- restrict to internal network
+    location /metrics {
+        allow 10.0.0.0/8;
+        allow 172.16.0.0/12;
+        allow 192.168.0.0/16;
+        deny all;
+        proxy_pass http://zerfoo;
+    }
+}
+```
+
+## Resource Sizing
+
+### CPU-Only
+
+| Model Size | RAM | CPU Cores | Notes |
+|-----------|-----|-----------|-------|
+| 1B (Q4_K_M) | 2 GB | 4+ | Suitable for development and light traffic |
+| 3B (Q4_K_M) | 4 GB | 8+ | Good for moderate throughput |
+| 7B (Q4_K_M) | 8 GB | 8+ | Recommended minimum for production |
+
+---
+
+
+## ONNX to GGUF
+Source: zonnx/onnx-to-gguf
+
+
+# ONNX to GGUF Conversion
+
+This guide walks through converting an ONNX model to GGUF format using zonnx. The resulting GGUF file can be loaded by zerfoo or llama.cpp.
+
+## Prerequisites
+
+- zonnx installed (`go install github.com/zerfoo/zonnx/cmd/zonnx@latest`)
+- An ONNX model file, either local or on HuggingFace
+
+## Step 1: Download a Model from HuggingFace
+
+Use the `download` command to fetch an ONNX model and its tokenizer files:
+
+```bash
+zonnx download --model google/gemma-2-2b-it --output ./models
+```
+
+For gated models that require authentication:
+
+```bash
+# Via flag
+zonnx download --model meta-llama/Llama-3-8B --output ./models --api-key YOUR_HF_TOKEN
+
+# Via environment variable
+export HF_API_KEY=YOUR_HF_TOKEN
+zonnx download --model meta-llama/Llama-3-8B --output ./models
+```
+
+The `--api-key` flag takes precedence over the `HF_API_KEY` environment variable.
+
+After downloading, you should have at minimum:
+
+```
+models/
+  model.onnx
+  config.json        # optional but recommended for metadata
+  tokenizer.json     # downloaded automatically if available
+```
+
+## Step 2: Convert to GGUF
+
+Run the `convert` command with the appropriate `--arch` flag:
+
+```bash
+zonnx convert --arch gemma --output ./models/gemma-2b.gguf ./models/model.onnx
+```
+
+### The `--arch` Flag
+
+The `--arch` flag selects the tensor name mapping and metadata mapping for the target architecture. If a `config.json` file exists alongside the ONNX file, zonnx reads it automatically and maps HuggingFace config fields to GGUF metadata keys.
+
+If `--arch` is omitted, it defaults to `llama`.
+
+### Convert Command Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output` | `<input-dir>/<input-base>.gguf` | Output GGUF file path |
+| `--arch` | `llama` | Model architecture for metadata and tensor mapping |
+| `--format` | `onnx` | Input format: `onnx` or `safetensors` |
+| `--quantize` | (none) | Quantize weights: `q4_0` or `q8_0` |
+
+## Step 3: Quantize During Conversion (Optional)
+
+To reduce model size, quantize weights during conversion:
+
+```bash
+# 4-bit quantization (smallest, some quality loss)
+zonnx convert --arch gemma --quantize q4_0 --output ./models/gemma-2b-q4.gguf ./models/model.onnx
+
+# 8-bit quantization (good balance of size and quality)
+zonnx convert --arch gemma --quantize q8_0 --output ./models/gemma-2b-q8.gguf ./models/model.onnx
+```
+
+| Quantization | Bits per Weight | Use Case |
+|-------------|-----------------|----------|
+| (none) | 32 | Full precision, largest file |
+| `q8_0` | 8 | Good quality, ~4x smaller than F32 |
+| `q4_0` | 4 | Smallest, ~8x smaller than F32 |
+
+## Step 4: Verify the Output
+
+Inspect the generated GGUF file to confirm metadata and tensors:
+
+```bash
+zonnx inspect --pretty ./models/gemma-2b.gguf
+```
+
+## Supported Architectures
+
+| Architecture | `--arch` value | Tensor Mapping | Notes |
+|-------------|----------------|----------------|-------|
+| Llama | `llama` (default) | Decoder layers (`model.layers.N.*`) | Llama 3, Code Llama |
+| Gemma | `gemma` | Decoder layers (`model.layers.N.*`) | Gemma, Gemma 2, Gemma 3 |
+| BERT | `bert` | Encoder layers (`bert.encoder.layer.N.*`) | Classification, embeddings |
+| RoBERTa | `roberta` | Encoder layers (`roberta.encoder.layer.N.*`) | Same structure as BERT |
+
+## Metadata Mapping
+
+When a `config.json` file is present alongside the ONNX model, zonnx maps these HuggingFace fields to GGUF metadata:
+
+| config.json field | GGUF key |
+|-------------------|----------|
+| `hidden_size` | `{arch}.embedding_length` |
+| `num_hidden_layers` | `{arch}.block_count` |
+| `num_attention_heads` | `{arch}.attention.head_count` |
+| `num_key_value_heads` | `{arch}.attention.head_count_kv` |
+| `intermediate_size` | `{arch}.feed_forward_length` |
+| `vocab_size` | `{arch}.vocab_size` |
+| `max_position_embeddings` | `{arch}.context_length` |
+| `rms_norm_eps` | `{arch}.attention.layer_norm_rms_epsilon` |
+| `rope_theta` | `{arch}.rope.freq_base` |
+
+## Using the GGUF File with Zerfoo
+
+Once converted, load the model with zerfoo:
+
+```bash
+zerfoo run ./models/gemma-2b.gguf --prompt "Hello, world!"
+```
+
+Or serve it as an OpenAI-compatible API:
+
+```bash
+zerfoo serve ./models/gemma-2b.gguf
+```
+
+---
+
+
+## zonnx Overview
+Source: zonnx/overview
+
+
+# zonnx Overview
+
+zonnx is a standalone command-line tool that converts machine learning models to [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) format. It accepts ONNX and SafeTensors inputs and produces portable GGUF files compatible with both the zerfoo runtime and llama.cpp.
+
+zonnx ships as a single static binary with no CGo dependency.
+
+## Features
+
+- **ONNX to GGUF conversion** -- convert decoder models (Llama, Gemma) from ONNX format
+- **SafeTensors to GGUF conversion** -- convert encoder models (BERT, RoBERTa) from SafeTensors format
+- **Post-conversion quantization** -- quantize weights to Q4_0 or Q8_0 during conversion
+- **HuggingFace integration** -- download ONNX models and tokenizer files directly from the Hub
+- **Model inspection** -- inspect ONNX and GGUF files for metadata, tensors, and structure
+- **Architecture-aware mappings** -- tensor name and metadata mappings tuned per model family
+
+## Installation
+
+Requires Go 1.26 or later. Install with:
+
+```bash
+go install github.com/zerfoo/zonnx/cmd/zonnx@latest
+```
+
+Or build from source:
+
+```bash
+git clone https://github.com/zerfoo/zonnx.git
+cd zonnx
+go build -o zonnx ./cmd/zonnx
+```
+
+CGo is not required -- `CGO_ENABLED=0` works.
+
+## Supported Architectures
+
+| Architecture | `--arch` value | Input Formats | Notes |
+|-------------|----------------|---------------|-------|
+| Llama | `llama` (default) | ONNX | Llama 3, Code Llama |
+| Gemma | `gemma` | ONNX | Gemma, Gemma 2, Gemma 3 |
+| BERT | `bert` | ONNX, SafeTensors | Classification, embeddings |
+| RoBERTa | `roberta` | ONNX, SafeTensors | Same layer structure as BERT |
+
+Any architecture string can be passed via `--arch`. Generic metadata mapping applies to all architectures. Tensor name mapping currently covers Llama-style decoder models and BERT/RoBERTa encoder models.
+
+## Basic Usage
+
+```bash
+# Download an ONNX model from HuggingFace
+zonnx download --model google/gemma-2-2b-it --output ./models
+
+# Convert ONNX to GGUF
+zonnx convert --arch gemma --output ./models/model.gguf ./models/model.onnx
+
+# Convert SafeTensors to GGUF
+zonnx convert --format safetensors --arch bert --output ./models/model.gguf ./models/bert-dir/
+
+# Convert with quantization
+zonnx convert --quantize q4_0 --output ./models/model-q4.gguf ./models/model.onnx
+
+# Inspect a model file
+zonnx inspect --pretty ./models/model.onnx
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `convert` | Convert ONNX or SafeTensors models to GGUF |
+| `download` | Download ONNX models and tokenizer files from HuggingFace Hub |
+| `inspect` | Inspect ONNX or GGUF model files |
+
+## Next Steps
+
+- [ONNX to GGUF]({{< relref "onnx-to-gguf" >}}) -- step-by-step guide for converting ONNX models
+- [SafeTensors to GGUF]({{< relref "safetensors-to-gguf" >}}) -- guide for converting SafeTensors models (BERT, RoBERTa)
+
+---
+
+
+## SafeTensors to GGUF
+Source: zonnx/safetensors-to-gguf
+
+
+# SafeTensors to GGUF Conversion
+
+This guide covers converting SafeTensors models (typically BERT and RoBERTa) to GGUF format using zonnx. SafeTensors is HuggingFace's preferred serialization format for model weights.
+
+## Prerequisites
+
+- zonnx installed (`go install github.com/zerfoo/zonnx/cmd/zonnx@latest`)
+- A HuggingFace model directory containing `config.json` and `model.safetensors`
+
+## Directory Structure
+
+zonnx expects a directory as input for SafeTensors conversion. The directory must contain:
+
+```
+model-dir/
+  config.json           # required -- model configuration
+  model.safetensors     # required -- model weights
+```
+
+The `config.json` provides architecture metadata (hidden size, layer count, attention heads, etc.) that zonnx maps to GGUF metadata keys. The `model.safetensors` file contains the weight tensors.
+
+## Step 1: Download a Model
+
+Download a model from HuggingFace. For example, to get [FinBERT](https://huggingface.co/ProsusAI/finbert) for financial sentiment analysis:
+
+```bash
+# Create a directory for the model
+mkdir -p ./models/finbert
+
+# Download config.json and model.safetensors
+# (use the HuggingFace CLI, git clone, or manual download)
+huggingface-cli download ProsusAI/finbert \
+  --include config.json model.safetensors \
+  --local-dir ./models/finbert
+```
+
+Verify the directory contents:
+
+```bash
+ls ./models/finbert/
+# config.json  model.safetensors
+```
+
+## Step 2: Convert to GGUF
+
+Run the `convert` command with `--format safetensors` and the appropriate `--arch`:
+
+```bash
+zonnx convert \
+  --format safetensors \
+  --arch bert \
+  --output ./models/finbert.gguf \
+  ./models/finbert/
+```
+
+Note that the input argument is the **directory** path, not the `.safetensors` file path.
+
+## config.json Fields and Metadata Mapping
+
+zonnx reads `config.json` and maps fields to GGUF metadata. For BERT and RoBERTa models, the following fields are mapped:
+
+### Standard Fields (All Architectures)
+
+| config.json field | GGUF key |
+|-------------------|----------|
+| `hidden_size` | `{arch}.embedding_length` |
+| `num_hidden_layers` | `{arch}.block_count` |
+| `num_attention_heads` | `{arch}.attention.head_count` |
+| `num_key_value_heads` | `{arch}.attention.head_count_kv` |
+| `intermediate_size` | `{arch}.feed_forward_length` |
+| `vocab_size` | `{arch}.vocab_size` |
+| `max_position_embeddings` | `{arch}.context_length` |
+
+### BERT/RoBERTa-Specific Fields
+
+| config.json field | GGUF key |
+|-------------------|----------|
+| `layer_norm_eps` | `{arch}.attention.layer_norm_epsilon` |
+| `num_labels` | `{arch}.num_labels` |
+| (auto) | `{arch}.pooler_type` = `"cls"` |
+
+If `num_labels` is not present in `config.json` but `id2label` is, zonnx derives the label count from the `id2label` mapping.
+
+## Supported Data Types
+
+zonnx handles these SafeTensors data types:
+
+| SafeTensors dtype | GGUF dtype |
+|-------------------|------------|
+| `F32` | Float32 |
+| `F16` | Float16 |
+| `BF16` | BFloat16 |
+
+Non-float tensors (e.g., `position_ids` with int64 dtype) are skipped automatically during conversion.
+
+## End-to-End Example: FinBERT
+
+This example converts [ProsusAI/finbert](https://huggingface.co/ProsusAI/finbert), a BERT model fine-tuned for financial sentiment classification.
+
+### 1. Download the Model
+
+```bash
+mkdir -p ./models/finbert
+huggingface-cli download ProsusAI/finbert \
+  --include config.json model.safetensors \
+  --local-dir ./models/finbert
+```
+
+### 2. Inspect config.json
+
+A typical FinBERT `config.json` contains:
+
+```json
+{
+  "architectures": ["BertForSequenceClassification"],
+  "hidden_size": 768,
+  "num_hidden_layers": 12,
+  "num_attention_heads": 12,
+  "intermediate_size": 3072,
+  "vocab_size": 30522,
+  "max_position_embeddings": 512,
+  "layer_norm_eps": 1e-12,
+  "id2label": {
+    "0": "positive",
+    "1": "negative",
+    "2": "neutral"
+  }
+}
+```
+
+zonnx maps these fields to GGUF metadata keys like `bert.embedding_length`, `bert.block_count`, `bert.attention.head_count`, etc. The three labels in `id2label` produce `bert.num_labels = 3`.
+
+### 3. Convert
+
+```bash
+zonnx convert \
+  --format safetensors \
+  --arch bert \
+  --output ./models/finbert.gguf \
+  ./models/finbert/
+```
+
+### 4. Verify
+
+```bash
+zonnx inspect --pretty ./models/finbert.gguf
+```
+
+The output should show GGUF metadata with `bert.*` keys and all encoder layer tensors.
+
+### 5. Use with Zerfoo
+
+```bash
+zerfoo predict ./models/finbert.gguf --input "Revenue exceeded expectations this quarter"
+```
+
+## RoBERTa Models
+
+RoBERTa conversion follows the same steps. Use `--arch roberta`:
+
+```bash
+zonnx convert \
+  --format safetensors \
+  --arch roberta \
+  --output ./models/roberta.gguf \
+  ./models/roberta-dir/
+```
+
+RoBERTa uses the same encoder layer structure as BERT. The `--arch` flag ensures tensor names are mapped using the `roberta.encoder.layer.N.*` prefix pattern.
+
+---
+
+
+## Numeric Types
+Source: ecosystem/numeric-types
+
+
+# Numeric Types
+
+Zerfoo provides two libraries for reduced-precision floating-point arithmetic: **float16** (IEEE 754 half-precision and BFloat16) and **float8** (FP8 E4M3FN). These are used throughout ztensor for quantized tensor storage and mixed-precision compute.
+
+## At a Glance
+
+| Type | Package | Bits | Format | Range | Precision | Best For |
+|------|---------|------|--------|-------|-----------|----------|
+| `Float16` | `float16` | 16 | 1 sign + 5 exp + 10 mantissa | ~6.55 x 10^4 | ~3-4 digits | Inference weights, activations |
+| `BFloat16` | `float16` | 16 | 1 sign + 8 exp + 7 mantissa | ~3.39 x 10^38 | ~2-3 digits | Training (same range as float32) |
+| `Float8` | `float8` | 8 | 1 sign + 4 exp + 3 mantissa (E4M3FN) | ~448 | ~1-2 digits | Quantized inference, memory savings |
+
+## float16
+
+```bash
+go get github.com/zerfoo/float16
+```
+
+The float16 package provides two types in a single module: `Float16` (IEEE 754 half-precision) and `BFloat16` (Brain Floating Point).
+
+### Float16
+
+Standard IEEE 754 half-precision with 10 bits of mantissa. Good precision for inference weights and activations, but limited range.
+
+```go
+import "github.com/zerfoo/float16"
+
+a := float16.FromFloat32(3.14159)
+b := float16.FromFloat64(2.71828)
+
+sum := a.Add(b)
+product := a.Mul(b)
+
+fmt.Printf("Sum: %f\n", sum.ToFloat32())
+fmt.Printf("Product: %f\n", product.ToFloat32())
+```
+
+### BFloat16
+
+Same exponent range as float32 (8 exponent bits) with reduced mantissa (7 bits). Preferred for training because it avoids overflow/underflow issues that Float16 suffers from at the edges of the float32 range.
+
+```go
+bf := float16.BFloat16FromFloat32(1.5)
+f32 := bf.ToFloat32()
+```
+
+### Special Values and Classification
+
+```go
+f := float16.FromFloat32(3.14)
+
+f.IsInf(0)     // check for infinity
+f.IsNaN()      // check for NaN
+f.IsFinite()   // check for finite
+f.IsNormal()   // check for normalized
+f.IsSubnormal() // check for subnormal
+```
+
+### Rounding Modes
+
+```go
+config := float16.GetConfig()
+config.DefaultRoundingMode = float16.RoundNearestEven // default
+float16.Configure(config)
+
+// Available: RoundNearestEven, RoundTowardZero,
+// RoundTowardPositive, RoundTowardNegative, RoundNearestAway
+```
+
+### Vectorized Operations
+
+```go
+a := []float16.Float16{...}
+b := []float16.Float16{...}
+
+sum := float16.VectorAdd(a, b)
+product := float16.VectorMul(a, b)
+```
+
+## float8
+
+```bash
+go get github.com/zerfoo/float8
+```
+
+The float8 package implements FP8 E4M3FN, an 8-bit floating-point format widely used for quantized ML inference. It has no infinity representation (the E4M3FN variant uses that encoding for additional finite values).
+
+```go
+import "github.com/zerfoo/float8"
+
+a := float8.FromFloat32(3.14)
+b := float8.FromFloat32(2.71)
+
+sum := a.Add(b)
+product := a.Mul(b)
+
+fmt.Printf("a + b = %f\n", sum.ToFloat32())
+fmt.Printf("a * b = %f\n", product.ToFloat32())
+```
+
+### Fast Mode
+
+For performance-critical paths, enable lookup-table-based arithmetic:
+
+```go
+float8.EnableFastArithmetic()
+float8.EnableFastConversion()
+```
+
+This trades memory for speed by using pre-computed tables.
+
+## When to Use Each Type
+
+| Scenario | Recommended Type |
+|----------|-----------------|
+| Model inference weights | Float16 or BFloat16 |
+| Training (mixed precision) | BFloat16 (matches float32 range) |
+| Quantized inference (Q8) | Float8 E4M3FN |
+| CUDA kernel intermediate values | Float16 |
+| Memory-constrained deployment | Float8 |
+
+## Integration with ztensor
+
+These types are first-class citizens in ztensor. Create tensors of any numeric type:
+
+```go
+import (
+    "github.com/zerfoo/float16"
+    "github.com/zerfoo/ztensor/tensor"
+    "github.com/zerfoo/ztensor/compute"
+    "github.com/zerfoo/ztensor/numeric"
+)
+
+// Float16 tensor
+a, _ := tensor.New[float16.Float16]([]int{2, 3}, data)
+eng := compute.NewCPUEngine[float16.Float16](numeric.Float16Ops{})
+```
+
+The compute engine handles dequantization automatically when mixing precision levels.
+
+---
+
+
+## ztensor
+Source: ecosystem/ztensor
+
+
+# ztensor
+
+GPU-accelerated tensor, compute engine, and computation graph library for Go.
+
+```bash
+go get github.com/zerfoo/ztensor
+```
+
+## Overview
+
+ztensor is the foundational tensor and compute library in the Zerfoo ecosystem. It provides multi-type tensor storage, a unified compute engine interface across CPU and GPU backends, a computation graph compiler with operator fusion, and GPU memory management -- all without CGo.
+
+If you are building an ML inference engine, need GPU compute from Go, or want a typed tensor library, ztensor is the package to import.
+
+## When to Use ztensor Directly
+
+| Use case | Import |
+|----------|--------|
+| Tensor math, GPU compute, custom ML operators | `github.com/zerfoo/ztensor` directly |
+| Transformer inference, model serving, training | `github.com/zerfoo/zerfoo` (imports ztensor internally) |
+
+Import ztensor directly when you need tensor operations or GPU compute without the full inference/serving stack. If you are running transformer models, use zerfoo -- it builds on ztensor for you.
+
+## Tensor Creation
+
+Tensors are generic over all numeric types via the `tensor.Numeric` constraint:
+
+```go
+import "github.com/zerfoo/ztensor/tensor"
+
+// Create a 2x3 float32 tensor
+a, _ := tensor.New[float32]([]int{2, 3}, []float32{1, 2, 3, 4, 5, 6})
+
+fmt.Println(a.Shape()) // [2, 3]
+fmt.Println(a.Data())  // [1 2 3 4 5 6]
+```
+
+Supported element types include `float32`, `float64`, `float16.Float16`, `float16.BFloat16`, `float8.Float8`, and all Go integer types.
+
+## Compute Engine
+
+All arithmetic flows through the `compute.Engine[T]` interface. This enables transparent CPU/GPU switching and CUDA graph capture.
+
+### CPU Engine
+
+```go
+import (
+    "context"
+
+    "github.com/zerfoo/ztensor/compute"
+    "github.com/zerfoo/ztensor/numeric"
+    "github.com/zerfoo/ztensor/tensor"
+)
+
+ctx := context.Background()
+eng := compute.NewCPUEngine[float32](numeric.Float32Ops{})
+
+a, _ := tensor.New[float32]([]int{2, 3}, []float32{1, 2, 3, 4, 5, 6})
+b, _ := tensor.New[float32]([]int{3, 2}, []float32{1, 2, 3, 4, 5, 6})
+
+c, _ := eng.MatMul(ctx, a, b)
+fmt.Println(c.Shape()) // [2, 2]
+fmt.Println(c.Data())  // [22 28 49 64]
+```
+
+### GPU Engine
+
+GPU libraries are loaded at runtime via purego -- no CGo, no build tags, no linking. If the GPU runtime is not available, the constructor returns an error and you fall back to CPU.
+
+```go
+// CUDA (NVIDIA GPUs)
+eng, err := compute.NewGPUEngine[float32](numeric.Float32Ops{})
+
+// ROCm (AMD GPUs)
+eng, err := compute.NewROCmEngine[float32](numeric.Float32Ops{})
+
+// OpenCL (cross-vendor)
+eng, err := compute.NewOpenCLEngine[float32](numeric.Float32Ops{})
+```
+
+A common pattern is to try GPU first with a CPU fallback:
+
+```go
+eng, err := compute.NewGPUEngine[float32](numeric.Float32Ops{})
+if err != nil {
+    eng = compute.NewCPUEngine[float32](numeric.Float32Ops{})
+}
+```
+
+## Type-Safe Generics
+
+Write functions that work across any numeric type:
+
+```go
+func dotProduct[T tensor.Numeric](
+    eng compute.Engine[T],
+    a, b *tensor.TensorNumeric[T],
+) (*tensor.TensorNumeric[T], error) {
+    return eng.MatMul(context.Background(), a, b)
+}
+```
+
+## Computation Graph
+
+The `graph` package provides a computation graph compiler with operator fusion passes and CUDA graph capture for optimized inference:
+
+| Feature | Description |
+|---------|-------------|
+| Operator fusion | Combines adjacent operations to reduce kernel launches |
+| CUDA graph capture | Records and replays GPU execution for minimal launch overhead |
+| Megakernel codegen | Generates fused GPU kernels at compile time |
+
+## Package Reference
+
+| Package | Description |
+|---------|-------------|
+| `tensor/` | Multi-type tensor storage (CPU, GPU, quantized) |
+| `compute/` | Engine interface with CPU, CUDA, ROCm, and OpenCL implementations |
+| `graph/` | Computation graph compiler with fusion and CUDA graph capture |
+| `numeric/` | Type-safe `Arithmetic[T]` interface for all numeric types |
+| `device/` | Device abstraction and memory allocators |
+| `internal/cuda/` | Zero-CGo CUDA runtime bindings via purego, 25+ custom kernels |
+| `internal/xblas/` | ARM NEON and x86 AVX2 SIMD assembly |
+| `internal/gpuapi/` | GPU Runtime Abstraction Layer (CUDA/ROCm/OpenCL) |
+| `internal/codegen/` | Megakernel code generator |
+
+## Dependencies
+
+ztensor depends on [float16]({{< relref "numeric-types" >}}) and [float8]({{< relref "numeric-types" >}}) for half-precision and FP8 arithmetic.
+
+---
+
+
+## ztoken
+Source: ecosystem/ztoken
+
+
+# ztoken
+
+BPE tokenizer library for Go with HuggingFace compatibility.
+
+```bash
+go get github.com/zerfoo/ztoken
+```
+
+## Overview
+
+ztoken provides a Byte-Pair Encoding tokenizer that loads HuggingFace `tokenizer.json` files and extracts tokenizer data from GGUF model files. It handles SentencePiece compatibility (Llama, Gemma), special token management, and text normalization -- with zero external dependencies beyond `golang.org/x/text`.
+
+## Loading a Tokenizer
+
+### From HuggingFace tokenizer.json
+
+```go
+import "github.com/zerfoo/ztoken"
+
+tok, err := ztoken.LoadFromJSON("tokenizer.json")
+if err != nil {
+    panic(err)
+}
+```
+
+### From a GGUF Model File
+
+The `ztoken/gguf` sub-package extracts tokenizer data directly from GGUF model files, so you don't need a separate JSON file:
+
+```go
+import "github.com/zerfoo/ztoken/gguf"
+
+// metadata implements gguf.Metadata interface
+tok, err := gguf.ExtractTokenizer(metadata)
+if err != nil {
+    panic(err)
+}
+```
+
+### Build Programmatically
+
+```go
+vocab := map[string]int{
+    "hello": 0, "world": 1, " ": 2,
+    "<unk>": 3, "<s>": 4, "</s>": 5, "<pad>": 6,
+}
+merges := []ztoken.MergePair{
+    {Left: "hel", Right: "lo"},
+    {Left: "wor", Right: "ld"},
+}
+special := ztoken.SpecialTokens{BOS: 4, EOS: 5, PAD: 6, UNK: 3}
+
+tok := ztoken.NewBPETokenizer(vocab, merges, special, false)
+```
+
+## Encode and Decode
+
+```go
+// Encode text to token IDs
+ids, _ := tok.Encode("Hello, world!")
+fmt.Println(ids)
+
+// Decode token IDs back to text
+text, _ := tok.Decode(ids)
+fmt.Println(text) // Hello, world!
+```
+
+## Special Tokens
+
+```go
+special := tok.SpecialTokens()
+fmt.Printf("BOS=%d EOS=%d PAD=%d UNK=%d\n",
+    special.BOS, special.EOS, special.PAD, special.UNK)
+
+fmt.Println(tok.VocabSize())
+```
+
+## SentencePiece Compatibility
+
+Models using SentencePiece tokenization (Llama, Gemma) encode spaces as the U+2581 character. ztoken handles this automatically when loading from GGUF files with `tokenizer.ggml.model = "llama"`, or you can enable it manually:
+
+```go
+tok := ztoken.NewBPETokenizer(vocab, merges, special, false)
+tok.SetSentencePiece(true)
+```
+
+## Supported Models
+
+ztoken is compatible with tokenizers from:
+
+- GPT-2
+- Llama 3
+- Gemma 3
+- Mistral
+- Qwen 2
+- Phi 3/4
+- DeepSeek V3
+
+Any model using BPE with a HuggingFace `tokenizer.json` or GGUF-embedded tokenizer should work.
+
+## Package Structure
+
+| Package | Description |
+|---------|-------------|
+| `ztoken` | Core tokenizer interface, BPE implementation, HuggingFace JSON loader |
+| `ztoken/gguf` | GGUF metadata-based tokenizer extraction |
+
+## Dependencies
+
+ztoken has zero external dependencies beyond the Go standard library and `golang.org/x/text` for Unicode normalization. It is used by [zerfoo](https://github.com/zerfoo/zerfoo) for tokenizing prompts during inference.
+
+---
+
+
+## API Stability
+Source: reference/api-stability
+
+
+# Engine[T] API Freeze for v1.0
+
+**Status:** Frozen
+**Date:** 2026-03-18
+**ADR:** Supplements ADR-037 (GGUF sole format) and ADR-044+ (v1.0 roadmap)
+
+## Overview
+
+`compute.Engine[T tensor.Numeric]` is the central compute abstraction in
+`github.com/zerfoo/ztensor/compute`. Every tensor arithmetic operation in the
+Zerfoo ecosystem flows through this interface, enabling transparent CPU/GPU
+switching and CUDA graph capture. This document catalogs the frozen v1.0
+surface and defines extension interfaces for specialized hardware capabilities.
+
+## Core Interface — `Engine[T tensor.Numeric]`
+
+All implementations **must** provide every method below. The interface is
+defined in `compute/engine.go`.
+
+### Type Metadata
+
+| # | Method | Signature | Purpose |
+|---|--------|-----------|---------|
+| 1 | `Ops` | `() numeric.Arithmetic[T]` | Returns type-specific arithmetic operations |
+
+### Element-wise Arithmetic
+
+| # | Method | Signature | Purpose |
+|---|--------|-----------|---------|
+| 2 | `Add` | `(ctx, a, b, dst...) (*Tensor, error)` | Element-wise addition with broadcasting |
+| 3 | `Sub` | `(ctx, a, b, dst...) (*Tensor, error)` | Element-wise subtraction with broadcasting |
+| 4 | `Mul` | `(ctx, a, b, dst...) (*Tensor, error)` | Element-wise multiplication with broadcasting |
+| 5 | `Div` | `(ctx, a, b, dst...) (*Tensor, error)` | Element-wise division with broadcasting |
+| 6 | `Pow` | `(ctx, base, exp, dst...) (*Tensor, error)` | Element-wise power |
+| 7 | `MulScalar` | `(ctx, a, scalar, dst...) (*Tensor, error)` | Multiply tensor by scalar |
+| 8 | `DivScalar` | `(ctx, a, scalar, dst...) (*Tensor, error)` | Divide tensor by scalar |
+| 9 | `AddScalar` | `(ctx, a, scalar, dst...) (*Tensor, error)` | Add scalar to tensor |
+
+### Unary Math
+
+| # | Method | Signature | Purpose |
+|---|--------|-----------|---------|
+| 10 | `UnaryOp` | `(ctx, a, func(T)T, dst...) (*Tensor, error)` | Apply arbitrary unary function |
+| 11 | `Exp` | `(ctx, a, dst...) (*Tensor, error)` | Element-wise exponential |
+| 12 | `Log` | `(ctx, a, dst...) (*Tensor, error)` | Element-wise natural logarithm |
+| 13 | `Sin` | `(ctx, a, dst...) (*Tensor, error)` | Element-wise sine |
+| 14 | `Cos` | `(ctx, a, dst...) (*Tensor, error)` | Element-wise cosine |
+| 15 | `Tanh` | `(ctx, a, dst...) (*Tensor, error)` | Element-wise hyperbolic tangent |
+| 16 | `TanhPrime` | `(ctx, a, upstream, dst...) (*Tensor, error)` | Tanh gradient for backprop |
+| 17 | `Sqrt` | `(ctx, a, dst...) (*Tensor, error)` | Element-wise square root |
+| 18 | `Rsqrt` | `(ctx, a, dst...) (*Tensor, error)` | Element-wise reciprocal square root |
+
+### Linear Algebra
+
+| # | Method | Signature | Purpose |
+|---|--------|-----------|---------|
+| 19 | `MatMul` | `(ctx, a, b, dst...) (*Tensor, error)` | Matrix multiplication (2D+) |
+
+### Reduction
+
+| # | Method | Signature | Purpose |
+|---|--------|-----------|---------|
+| 20 | `Sum` | `(ctx, a, axis, keepDims, dst...) (*Tensor, error)` | Sum along axis |
+| 21 | `ReduceSum` | `(ctx, a, axis, keepDims, dst...) (*Tensor, error)` | Reduction sum (optimized path) |
+| 22 | `ReduceMean` | `(ctx, a, axis, keepDims, dst...) (*Tensor, error)` | Mean along axis |
+| 23 | `Softmax` | `(ctx, a, axis, dst...) (*Tensor, error)` | Softmax along axis |
+
+### Shape Manipulation
+
+| # | Method | Signature | Purpose |
+|---|--------|-----------|---------|
+| 24 | `Transpose` | `(ctx, a, axes, dst...) (*Tensor, error)` | Transpose along given axes |
+| 25 | `Reshape` | `(ctx, a, shape, dst...) (*Tensor, error)` | Reshape without copying data |
+| 26 | `Split` | `(ctx, a, numSplits, axis) ([]*Tensor, error)` | Split tensor along axis |
+| 27 | `Concat` | `(ctx, tensors, axis, dst...) (*Tensor, error)` | Concatenate tensors along axis |
+| 28 | `Repeat` | `(ctx, a, axis, reps, dst...) (*Tensor, error)` | Repeat tensor along axis |
+
+### Embedding / Scatter
+
+| # | Method | Signature | Purpose |
+|---|--------|-----------|---------|
+| 29 | `Gather` | `(ctx, params, indices, output) error` | Embedding-style gather (2D params, 1D/2D indices) |
+| 30 | `ScatterAdd` | `(ctx, dEmbedTable, indices, dOut) error` | Scatter-add for embedding gradients |
+
+### Initialization / Memory
+
+| # | Method | Signature | Purpose |
+|---|--------|-----------|---------|
+| 31 | `Zero` | `(ctx, a) error` | Set all elements to zero |
+| 32 | `Zeros` | `(ctx, a, shape) error` | Fill with zeros, optionally reallocate shape |
+| 33 | `Copy` | `(ctx, dst, src) error` | Copy data between tensors |
+| 34 | `Fill` | `(ctx, t, value) error` | Fill tensor with scalar |
+| 35 | `RandomUniform` | `(ctx, t, min, max) error` | Fill with uniform random values |
+| 36 | `OneHot` | `(ctx, input, depth, dst...) (*Tensor, error)` | One-hot encoding |
+
+**Total: 36 methods** in the core interface.
+
+## Extension Interfaces
+
+Extension interfaces are **optional**. Callers use Go type assertions
+(`eng.(FusedRoPEProvider[T])`) to check availability at runtime. All extension
+interfaces are defined in the `compute/` package alongside `Engine[T]`.
+
+### Fused Kernel Providers
+
+These eliminate kernel-launch overhead by combining multiple operations.
+
+| Interface | Method | Purpose |
+|-----------|--------|---------|
+| `FusedRMSNormer` | `FusedRMSNormGPU(input, weight, eps)` | Fused RMSNorm on GPU (float32 only) |
+| `FusedAddRMSNormProvider[T]` | `GPUFusedAddRMSNorm(input, residual, weight, eps)` | Fused residual-add + RMSNorm |
+| `FusedNormAddProvider[T]` | `GPUFusedNormAdd(input, weight, residual, eps)` | Fused RMSNorm + element-wise add |
+| `FusedScaledSoftmaxProvider[T]` | `GPUScaledSoftmax(input, scale, axis)` | Fused scale + softmax |
+| `FusedRoPEProvider[T]` | `GPUFusedRoPE(input, cos, sin, rotaryDim)` | Fused rotary position embedding |
+| `FusedSwiGLUProvider[T]` | `GPUFusedSwiGLU(w1, w3)` | Fused SwiGLU activation |
+| `FusedQKNormRoPEProvider[T]` | `GPUFusedQKNormRoPE(input, wQ, wK, cos, sin, eps, ...)` | Fused QK-norm + RoPE (4 kernels -> 1) |
+
+### Mixed-Precision / Quantized
+
+| Interface | Method | Purpose |
+|-----------|--------|---------|
+| `FP16ToF32Converter` | `ConvertFP16ToF32(t)` | Convert Float16Storage tensor to float32 GPU tensor |
+| `TransposeBMatMuler[T]` | `MatMulTransposeB(ctx, a, b, dst...)` | C = A * B^T without explicit transpose allocation |
+| `W4A16MatMuler[T]` | `MatMulW4A16(ctx, a, b, dst...)` | Mixed 4-bit weight / FP16 activation MatMul |
+
+### GPU Infrastructure
+
+| Interface | Method(s) | Purpose |
+|-----------|-----------|---------|
+| `StreamProvider` | `Stream() unsafe.Pointer` | Expose GPU stream for CUDA graph capture |
+| `GPUStreamAccessor` | `GPUStream() gpuapi.Stream` | Typed GPU stream for async memory ops |
+| `PoolResetter` | `ResetPool()` | O(1) arena reset between forward passes |
+| `WeightUploader` | `UploadWeights([]*Tensor) error` | Pre-upload weights to device memory |
+| `GPUArgmaxer` | `GPUArgmax(t) (int, error)` | GPU-side argmax (avoids ~1MB D2H copy per token) |
+
+### Paged Attention
+
+| Interface | Method(s) | Purpose |
+|-----------|-----------|---------|
+| `PagedGQAer` | `PagedGQA(Q, blockPtrsK, blockPtrsV, blockIndices, ...)` | Paged grouped-query attention via block-table indirection |
+| | `IsPagedGQASupported() bool` | Runtime availability check |
+
+## Proposed Extension Interfaces for v1.0
+
+The following extension interfaces are **recommended** for formalization before
+the v1.0 freeze. They capture patterns already present in the codebase as
+unexported methods or ad-hoc type assertions.
+
+### `EngineWithFP8`
+
+FP8 E4M3 support is currently handled inside `GPUEngine.MatMul` via storage
+type inspection. Formalizing it as an extension interface makes FP8 capability
+discoverable and testable.
+
+```go
+// EngineWithFP8 is an optional interface for engines that support
+// FP8 E4M3FN quantized matrix multiplication.
+type EngineWithFP8 interface {
+    // MatMulFP8 performs C = dequant(A_fp8) * B_f32 or C = A_f32 * dequant(B_fp8).
+    // The FP8 operand is identified by its FP8E4M3Storage.
+    MatMulFP8(ctx context.Context, a, b *tensor.TensorNumeric[float32],
+        dst ...*tensor.TensorNumeric[float32]) (*tensor.TensorNumeric[float32], error)
+
+    // IsFP8Supported returns true if the hardware supports FP8 operations.
+    IsFP8Supported() bool
+}
+```
+
+### `EngineWithPagedKV`
+
+Paged KV cache management is tightly coupled to the attention kernel. An
+extension interface makes the capability explicit for serving-layer code.
+
+```go
+// EngineWithPagedKV extends PagedGQAer with KV cache block management.
+type EngineWithPagedKV interface {
+    PagedGQAer
+
+    // AllocKVBlocks allocates N blocks of [blockSize, headDim] on device.
+    AllocKVBlocks(n, blockSize, headDim, numKVHeads int) (blockPtrs unsafe.Pointer, err error)
+
+    // FreeKVBlocks releases previously allocated KV blocks.
+    FreeKVBlocks(blockPtrs unsafe.Pointer, n int) error
+
+    // AppendKVToken appends a single token's K and V vectors to the paged cache.
+    AppendKVToken(blockPtrs unsafe.Pointer, blockIndices unsafe.Pointer,
+        k, v *tensor.TensorNumeric[float32], seqPos, blockSize, headDim int) error
+}
+```
+
+### `EngineWithBF16`
+
+BFloat16 is used in some model weights. A formal extension makes BF16
+capability discoverable.
+
+```go
+// EngineWithBF16 is an optional interface for engines that support
+// BFloat16 arithmetic or mixed BF16/F32 operations.
+type EngineWithBF16 interface {
+
+---
+
+
+## Benchmarks
+Source: reference/benchmarks
+
+
+# Benchmarks
+
+Performance measurements, comparisons with other runtimes, and methodology
+for reproducing all benchmark results.
+
+## Hardware
+
+All official benchmarks run on a single machine:
+
+| Component | Spec |
+|-----------|------|
+| System | NVIDIA DGX Spark |
+| SoC | NVIDIA Grace Blackwell GB10 (sm_121) |
+| Memory | 128 GB unified LPDDR5x (~200 GB/s bandwidth) |
+| CUDA | 13.0 |
+| OS | Linux (aarch64) |
+| Go | 1.25.0 |
+
+## Model
+
+| Property | Value |
+|----------|-------|
+| Model | Gemma 3 1B Instruct |
+| Format | GGUF |
+| Quantization | Q4_K_M |
+| File size | ~0.8 GB |
+| Source | [google/gemma-3-1b-it-GGUF](https://huggingface.co/google/gemma-3-1b-it-GGUF) |
+
+## Results
+
+### Current Baseline (2026-03-20)
+
+| Model | Format | Tok/s | CUDA Graph | Tokens | Notes |
+|-------|--------|-------|------------|--------|-------|
+| Gemma 3 1B | Q4_K_M | 244.45 | Yes | 256 | Regression fixed (E103) |
+| Gemma 3 1B | Q4_K_M | 244.18 | Yes | 256 | Run 2 |
+| Gemma 3 1B | Q4_K_M | 244.62 | Yes | 256 | Run 3 |
+
+Roofline analysis: GB10 LPDDR5x ~200 GB/s, max ~257 tok/s for 778 MB model.
+Current 244 tok/s = 95% bandwidth utilization.
+500 tok/s target requires hardware with higher memory bandwidth (A100/H100).
+
+### Previous Baseline (2026-03-17)
+
+| Model | Format | Tok/s | CUDA Graph | Tokens |
+|-------|--------|-------|------------|--------|
+| Gemma 3 1B | Q4_K_M | 219.17 | Yes | 50 |
+| Gemma 3 1B | Q4_K_M | 245.15 | Yes | 256 |
+| Gemma 3 1B | Q4_K_M | 248.47 | Yes | 512 |
+| Gemma 3 1B | Q4_K_M | 174.44 | No | 256 |
+| Ollama gemma3:1b | - | 203.60 | - | 989 |
+
+Note: dp4a INT8 GEMV and arena free-list reuse merged into ztensor.
+At batch=1 decode, throughput is memory-bandwidth-bound so dp4a shows parity as expected.
+dp4a benefits will appear at larger batch sizes where compute becomes the bottleneck.
+
+### Previous Baseline (2026-03-16)
+
+| Model | Format | Tok/s | CUDA Graph % | Output Quality | Tokens |
+|-------|--------|-------|-------------|----------------|--------|
+| Gemma 3 1B | GGUF Q4_0 | 103.22 (CUDA) / 9.20 (CPU) | 99.5% | Coherent | 50 |
+| Gemma 3 1B FP16 | GGUF Q4_0 + FP16 | 9.20 (CPU) | - | Valid | 30 |
+| Gemma 3 1B FP8 | GGUF Q4_0 + FP8 | ~0.5 (CPU) | - | Valid | 30 |
+| TinyLlama 1.1B | GGUF Q4_K_M | 7.18 (CPU) | - | Low (small model) | 50 |
+| Qwen 2.5 0.5B | GGUF Q4_K_M | ~13 (CPU) | - | Garbled (tokenizer bug) | 50 |
+| Mistral 7B | GGUF Q4_K_M | ~0.55 (CPU) | - | Low (loads as llama) | 50 |
+| Phi-3.5 mini | GGUF Q4_K_M | - | - | FAIL (merged QKV) | - |
+
+### Previous Baseline (2026-03-15)
+
+| Model | Format | Tok/s | CUDA Graph % | Output Quality | Tokens |
+|-------|--------|-------|-------------|----------------|--------|
+| Gemma 3 1B | GGUF Q4_K | 232.21 | 99.5% | Baseline | 256 |
+| Llama 3 1B | GGUF | 12.93 | 2.0% | Semi-coherent | 20 |
+| Qwen 2.5 0.5B | GGUF | 15.79 | 1.8% | Working (rep. penalty helps) | 20 |
+| Mistral 7B | GGUF | 3.94 | 1.2% | Working (spaces fixed) | 20 |
+| Phi-3 mini | GGUF | 4.14 | 0.5% | Semi-coherent | 20 |
+
+## Comparison: Zerfoo vs Ollama vs llama.cpp
+
+All measurements use a fixed prompt ("The meaning of life is") and measure
+steady-state decode throughput (tokens per second) after warm-up.
+
+| Framework | Version | Tokens | Tok/s (decode) | CUDA Graphs | Notes |
+|-----------|---------|--------|----------------|-------------|-------|
+| **Zerfoo** | v0.x | 256 | **245.15** | Yes | Q4_K_M loaded, re-quantized to Q4_0 at load time |
+| **Zerfoo** | v0.x | 512 | **248.47** | Yes | Throughput stable at longer sequences |
+| **Zerfoo** | v0.x | 50 | 219.17 | Yes | Lower at short sequences (warm-up amortization) |
+| **Zerfoo** | v0.x | 256 | 174.44 | No | Without CUDA graph capture |
+| **Ollama** | latest | 989 | 203.60 | N/A | Default settings, `ollama run gemma3:1b` |
+| **llama.cpp** | b5220+ | 256 | ~210-230 | No | Estimated from community reports on GB10-class hardware |
+
+**Summary:**
+
+- Zerfoo with CUDA graphs: **245 tok/s** (+20% vs Ollama, ~10-15% vs llama.cpp)
+- Zerfoo without CUDA graphs: **174 tok/s** (CUDA graph capture adds +40%)
+- Ollama: **204 tok/s** (uses llama.cpp under the hood with its own overhead)
+
+> **Note on llama.cpp numbers:** Direct llama.cpp measurements on this exact
+> DGX Spark unit are pending. The estimate above is based on published community
+> benchmarks for GB10 / Blackwell-class hardware with Gemma 3 1B Q4_K_M. We
+> will update this table when we complete our own llama.cpp runs.
+
+### Why Zerfoo Is Faster
+
+1. **CUDA graph capture (99.5% coverage):** The entire decode step (26
+   transformer layers, attention, FFN, norms) is captured as a single CUDA
+   graph. This eliminates per-kernel launch overhead (~5-10 us per launch x
+   hundreds of kernels per token) and lets the GPU execute the full pipeline
+   without returning control to the host.
+
+2. **Fused kernels:** Operations that are separate kernel launches in other
+   frameworks are fused in Zerfoo:
+   - `FusedAddRMSNorm` (residual addition + RMS normalization in one pass)
+   - `FusedQKNormRoPE` (QK normalization + rotary position embeddings)
+   - `FusedSiluGate` (SiLU activation + gating in the FFN)
+   - Merged QKV and Gate+Up projections (single GEMV instead of 2-3 separate)
+
+3. **Zero CGo overhead:** GPU bindings use purego/dlopen instead of CGo. This
+   avoids the ~200 ns per CGo call overhead that accumulates across thousands of
+   CUDA API calls per token.
+
+4. **Optimized Q4_0 GEMV:** The quantized matrix-vector multiply kernel is
+   hand-tuned for the decode path with coalesced memory access patterns and
+   efficient warp-level reductions.
+
+### Expected Results by GPU Class
+
+| GPU | Zerfoo (est.) | Notes |
+|-----|---------------|-------|
+| DGX Spark GB10 | 245 tok/s | Measured |
+| RTX 4090 | TBD | Community contributions welcome |
+| RTX 3090 | TBD | Community contributions welcome |
+| A100 80GB | TBD | Community contributions welcome |
+| Apple M-series (CPU) | ~8-15 tok/s | Metal backend not yet implemented |
+
+## Vision Models
+
+Vision model benchmarks use synthetic weights with small dimensions for CI,
+and full GGUF models for hardware throughput validation.
+
+| Model | Test | Status | Env Var |
+|-------|------|--------|---------|
+| LLaVA | BenchmarkLLaVA_Throughput | Synthetic (CI) | - |
+| LLaVA | TestLLaVA_VisionPipeline | Full model | LLAVA_GGUF_PATH |
+| Qwen-VL | BenchmarkQwenVL_Throughput | Synthetic (CI) | - |
+| Qwen-VL | TestQwenVL_VisionPipeline | Full model | QWENVL_GGUF_PATH |
+
+```bash
+# Run synthetic benchmarks
+go test -bench BenchmarkLLaVA -count=1 ./tests/parity/
+go test -bench BenchmarkQwenVL -count=1 ./tests/parity/
+
+# Run full-model vision pipeline tests (requires GGUF files)
+LLAVA_GGUF_PATH=/path/to/llava.gguf go test -run TestLLaVA_VisionPipeline -count=1 -v ./tests/parity/
+QWENVL_GGUF_PATH=/path/to/qwenvl.gguf go test -run TestQwenVL_VisionPipeline -count=1 -v ./tests/parity/
+```
+
+## Performance Milestones
+
+| Date | Milestone | Tok/s | Notes |
+|------|-----------|-------|-------|
+| 2026-03-17 | dp4a + arena reuse | 245.15 | Parity at batch=1 (memory-bound); dp4a benefits at larger batches |
+| 2026-03-17 | Q4_0 re-quant restored | 244.99 | +32% vs regression, +20% vs Ollama |
+| 2026-03-14 | CUDA graph capture | 234.30 | +26% vs non-graph baseline |
+| 2026-03-13 | GPU-first pipeline | 6.84 | +33.6% from D2H elimination |
+| 2026-03-13 | Graph compilation | 6.86 | +5% from worker pool |
+| 2026-03-12 | NEON SIMD | 8.15 | +18.8% CPU acceleration |
+| 2026-03-12 | CPU baseline | 6.5 | parallelFor + xblas |
+| 2026-03-11 | Initial GPU | 5.12 | 43% cgocall overhead |
+| 2026-03-10 | Initial CPU | 3.60 | Gemma 3 2B Q4 |
+
+## Methodology
+
+Every performance claim in this project is backed by a reproducible benchmark
+run. This section describes the measurement procedure so that anyone can
+independently verify the numbers.
+
+### Software Versions
+
+Always record exact versions alongside every benchmark result:
+
+| Component | Version |
+|-----------|---------|
+| Go | 1.25.0 |
+| CUDA Toolkit | 13.0 |
+| Zerfoo | latest `main` (record commit hash with each run) |
+| ztensor | v0.1.0 (see `go.mod`) |
+| ztoken | v0.1.0 (see `go.mod`) |
+| float16 | v0.2.0 |
+| float8 | v0.2.0 |
+
+### Measurement Procedure
+
+1. **Warm-up phase** -- Run a short generation (16-32 tokens) to warm up the
+   GPU, populate caches, and trigger JIT compilation / CUDA graph capture.
+   Discard these results.
+
+2. **Measurement window** -- Generate at least **256 tokens** in decode mode.
+
+---
+
+
+## Extensions
+Source: reference/extensions
+
+
+# Third-Party Extension Convention
+
+This document describes how third-party developers can extend Zerfoo by
+registering custom model architectures and quantization formats. Extensions
+use Go's `init()` function and the blank-import pattern so that importing a
+package is sufficient to activate it — no explicit wiring required.
+
+## Extension Points
+
+Zerfoo exposes two registries that accept third-party extensions:
+
+| Registry | Package | Function | Interface |
+|----------|---------|----------|-----------|
+| Architecture | `github.com/zerfoo/zerfoo/inference` | `RegisterArchitecture(name, builder)` | `inference.ArchBuilder` |
+| Quantization format | `github.com/zerfoo/ztensor/tensor` | `RegisterQuantType(name, dequantizer)` | `tensor.Dequantizer` |
+
+Both registries are concurrency-safe and panic on duplicate or empty names,
+so registration errors surface immediately at program startup.
+
+## Naming Convention
+
+Extension packages should follow the naming pattern:
+
+```
+github.com/<user>/zerfoo-ext-<name>
+```
+
+Examples:
+
+- `github.com/acme/zerfoo-ext-starcoder` — StarCoder architecture
+- `github.com/acme/zerfoo-ext-nf4` — NF4 quantization format
+
+The `zerfoo-ext-` prefix makes extensions discoverable via GitHub search and
+clearly signals compatibility with the Zerfoo ecosystem.
+
+## Import Pattern
+
+End users activate an extension with a blank import. This causes the
+package's `init()` function to run, which registers the extension with the
+appropriate registry.
+
+```go
+import (
+    "github.com/zerfoo/zerfoo/inference"
+
+    // Activate the StarCoder extension.
+    _ "github.com/acme/zerfoo-ext-starcoder"
+)
+```
+
+After this import, `inference.GetArchitecture("starcoder")` returns the
+registered builder, and models with `general.architecture = starcoder` in
+their GGUF metadata load automatically.
+
+## Writing an Architecture Extension
+
+An architecture extension registers an `inference.ArchBuilder` — a function
+that builds a computation graph from GGUF tensors.
+
+### ArchBuilder Signature
+
+```go
+type ArchBuilder func(
+    tensors map[string]*tensor.TensorNumeric[float32],
+    cfg     *gguf.ModelConfig,
+    engine  compute.Engine[float32],
+) (*graph.Graph[float32], *tensor.TensorNumeric[float32], error)
+```
+
+The builder receives the model's tensors (keyed by GGUF tensor name), the
+parsed model configuration, and a compute engine. It returns the compiled
+computation graph and the embedding table tensor.
+
+### Example
+
+```go
+// Package starcoder registers the StarCoder architecture with Zerfoo.
+package starcoder
+
+import (
+    "github.com/zerfoo/ztensor/compute"
+    "github.com/zerfoo/ztensor/graph"
+    "github.com/zerfoo/ztensor/tensor"
+    "github.com/zerfoo/zerfoo/inference"
+    "github.com/zerfoo/zerfoo/model/gguf"
+)
+
+func init() {
+    inference.RegisterArchitecture("starcoder", buildStarCoderGraph)
+}
+
+func buildStarCoderGraph(
+    tensors map[string]*tensor.TensorNumeric[float32],
+    cfg     *gguf.ModelConfig,
+    engine  compute.Engine[float32],
+) (*graph.Graph[float32], *tensor.TensorNumeric[float32], error) {
+    g := graph.New[float32](engine)
+    embedTensor := tensors["token_embd.weight"]
+    if embedTensor == nil {
+        return nil, nil, fmt.Errorf("starcoder: missing token_embd.weight")
+    }
+
+    // Build the transformer layers using cfg and tensors...
+    // (See inference/arch_llama.go for a full reference implementation.)
+
+    return g, embedTensor, nil
+}
+```
+
+### Architecture Name
+
+The name passed to `RegisterArchitecture` must match the
+`general.architecture` value stored in the GGUF file. This is how Zerfoo
+looks up the correct builder at model-load time.
+
+## Writing a Quantization Format Extension
+
+A quantization format extension registers a `tensor.Dequantizer` — an
+interface that decodes quantized weight data back to float32.
+
+### Dequantizer Interface
+
+```go
+type Dequantizer interface {
+    // Dequantize decodes quantized bytes in src into float32 values in dst.
+    Dequantize(src []byte, dst []float32) error
+
+    // BlockSize returns the number of elements per quantization block.
+    BlockSize() int
+
+    // BitsPerWeight returns the effective number of bits per weight element.
+    BitsPerWeight() int
+}
+```
+
+### Example
+
+```go
+// Package nf4 registers the NF4 quantization format with ztensor.
+package nf4
+
+import "github.com/zerfoo/ztensor/tensor"
+
+func init() {
+    tensor.RegisterQuantType("NF4", nf4Dequantizer{})
+}
+
+type nf4Dequantizer struct{}
+
+func (nf4Dequantizer) Dequantize(src []byte, dst []float32) error {
+    // Decode NF4 blocks from src into dst...
+    return nil
+}
+
+func (nf4Dequantizer) BlockSize() int     { return 32 }
+func (nf4Dequantizer) BitsPerWeight() int { return 4 }
+```
+
+### Quantization Type Name
+
+The name passed to `RegisterQuantType` must match the quantization type
+string stored in GGUF tensor metadata. Built-in formats include `Q4_0`,
+`Q8_0`, `Q4_K`, `Q5_K`, `Q6_K`, `Q5_0`, `FP8_E4M3`, and `FP8_E5M2`.
+
+## Testing Requirements
+
+Extensions must include tests that verify correct registration and
+functional behavior. Use the patterns below as a starting point.
+
+### Registration Test
+
+Verify that the `init()` function registers the extension and that lookup
+succeeds.
+
+```go
+package starcoder_test
+
+import (
+    "testing"
+
+    "github.com/zerfoo/zerfoo/inference"
+
+    // Blank import triggers init() registration.
+    _ "github.com/acme/zerfoo-ext-starcoder"
+)
+
+func TestRegistered(t *testing.T) {
+    builder, ok := inference.GetArchitecture("starcoder")
+    if !ok {
+        t.Fatal("starcoder architecture not registered")
+    }
+    if builder == nil {
+        t.Fatal("starcoder builder is nil")
+    }
+}
+```
+
+### Functional Test
+
+
+---
+
+
+## Migration to v1
+Source: reference/migration-v1
+
+
+# Migrating to Zerfoo v1.0
+
+This guide covers all breaking changes between Zerfoo v0.x and v1.0, with
+actionable migration steps for each.
+
+## Overview
+
+Zerfoo v1.0 is the first release with a backwards-compatibility guarantee
+(2 years through v1.x). The major changes are:
+
+1. **ZMF model format removed** -- GGUF is the sole model format.
+2. **Repository split** -- tensor/compute/graph packages moved to `ztensor`;
+   tokenizer moved to `ztoken`.
+3. **`compute.Engine[T]` interface frozen** -- new capabilities use [extension
+   interfaces]({{< relref "api-stability" >}}).
+4. **CGo build tags removed** -- GPU bindings use purego/dlopen exclusively.
+5. **High-level API introduced** -- `inference.Load` / `inference.LoadFile`
+   replace manual GGUF loading.
+6. **KV cache interface unified** -- `CacheProvider[T]` replaces concrete
+   `*KVCache[T]` in context helpers.
+7. **Sub-package maturity labels** -- packages are labeled Stable, Beta, or
+   Alpha with different compatibility guarantees.
+
+
+## Sub-Package Maturity Labels
+
+Packages are now labeled by maturity level, which determines their
+compatibility guarantee:
+
+| Level | Guarantee | Packages |
+|-------|-----------|----------|
+| **Stable** | Full v1.x backwards compatibility | `inference/`, `generate/`, `serve/`, `model/`, `layers/` |
+| **Beta** | Schema preserved, behavior may change | `training/`, `distributed/` |
+| **Alpha** | May be restructured | `training/nas/`, `training/automl/` |
+
+
+## New Features in v1.0
+
+These are additive and do not require migration, but are worth knowing about:
+
+- **Architecture registry** -- `inference.RegisterArchitecture` / `inference.ListArchitectures` for pluggable model support.
+- **12 model architectures** -- Llama 3, Gemma 3, Mistral, Qwen 2, Phi 3/4, DeepSeek V3, Falcon, Command R, Mixtral, RWKV, Jamba, Mamba 3.
+- **Speculative decoding** -- `inference.Model.SpeculativeGenerate` and `generate.WithSpeculativeDraft`.
+- **Paged KV cache** -- `generate.WithPagedKV` for memory-efficient serving.
+- **Prefix caching** -- `generate.WithPrefixCache` for shared system prompt reuse.
+- **FP16 KV cache** -- `generate.WithGeneratorKVDtype("fp16")` for 2x bandwidth reduction.
+- **Grammar-constrained decoding** -- `inference.WithGrammar` and `serve.ResponseFormat{Type: "json_schema"}`.
+- **Tool calling** -- `serve.Tool` / `serve.ToolChoice` in the OpenAI-compatible API.
+- **Vision and audio** -- multimodal inference with LLaVA, SigLIP, and Whisper.
+- **Batch generation** -- `inference.Model.GenerateBatch` and `serve.BatchScheduler`.
+- **Continuous batching** -- `serve.NewBatchScheduler` for high-throughput serving.
+- **LoRA/QLoRA fine-tuning** -- `training/lora/` and `cmd/finetune`.
+- **FSDP distributed training** -- `distributed/fsdp/` with NCCL AllGather/ReduceScatter.
+- **HuggingFace model downloads** -- `zerfoo pull` CLI with resume and SHA256 verification.
+- **SSM support** -- Mamba block, SSM state management, Jamba hybrid architecture.
+
+
+---
+

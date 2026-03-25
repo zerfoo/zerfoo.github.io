@@ -4,6 +4,7 @@ title: Zerfoo - ML Framework for Go
 theme: hugo-book
 
 params:
+  description: "Production-grade ML inference and training framework for Go. 245 tok/s on Gemma 3 1B. Zero CGo. 20 model architectures."
   BookTheme: auto
   BookToC: true
   BookSection: docs
@@ -11,6 +12,10 @@ params:
   BookMenuBundle: /menu
   BookSearch: true
   BookDateFormat: January 2, 2006
+  images:
+    - /zerfoo.png
+
+enableRobotsTXT: true
 
 markup:
   goldmark:
@@ -19,3 +24,11 @@ markup:
   highlight:
     style: monokai
     lineNos: false
+
+outputs:
+  home:
+    - HTML
+    - RSS
+  section:
+    - HTML
+    - RSS

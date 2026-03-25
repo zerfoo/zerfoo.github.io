@@ -6,9 +6,17 @@ https://github.com/alex-shpak/hugo-book
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="{{ or .Description .Summary | plainify | htmlUnescape }}">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#2e3440">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#7C3AED">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#8B5CF6">
 <meta name="color-scheme" content="light dark">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ partial "docs/html-head-title" . }}">
+<meta name="twitter:description" content="{{ or .Description .Summary | plainify | htmlUnescape | truncate 200 }}">
+{{- with .Site.Params.images }}
+<meta name="twitter:image" content="{{ index . 0 | absURL }}">
+{{- end }}
 
 {{- with .Page.Params.BookHref -}}
   <meta http-equiv="Refresh" content="0; url='{{ . }}'" />
