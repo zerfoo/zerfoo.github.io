@@ -246,7 +246,7 @@ footer .right a:hover{color:var(--fg)}
       <a href="#benchmarks">Performance</a>
       <a href="#models">Models</a>
       <a href="#blog">Blog</a>
-      <a href="https://pkg.go.dev/github.com/zerfoo/zerfoo" target="_blank">Docs</a>
+      <a href="/docs/">Docs</a>
       <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -462,7 +462,7 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
     </div>
 
     <div class="bench-note">
-      Hardware: NVIDIA DGX Spark GB10, sm_121, 128GB LPDDR5x. Methodology: 3 runs, 32-token warmup, median reported. Full details in <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/benchmarking-methodology.md" target="_blank">benchmarking-methodology.md</a>.
+      Hardware: NVIDIA DGX Spark GB10, sm_121, 128GB LPDDR5x. Methodology: 3 runs, 32-token warmup, median reported. Full details in <a href="/docs/reference/benchmarks/">benchmarks</a>.
     </div>
   </div>
 </section>
@@ -572,22 +572,22 @@ $ curl <span class="str">http://localhost:8080/v1/chat/completions</span> \
       <p>Deep dives into the engineering behind Zerfoo.</p>
     </div>
     <div class="blog-grid">
-      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/blog/how-we-beat-ollama-cuda-graph-capture.md" target="_blank" class="blog-card">
+      <a href="/docs/blog/how-we-beat-ollama-cuda-graph-capture/" class="blog-card">
         <div class="tag">Performance</div>
         <h3>How We Beat Ollama: CUDA Graph Capture in Pure Go</h3>
         <p>CUDA graph capture and fused kernels took Zerfoo from 186 tok/s to 245 tok/s. A deep dive into making the decode path GPU-only.</p>
       </a>
-      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/blog/zero-cgo-pure-go-ml-inference.md" target="_blank" class="blog-card">
+      <a href="/docs/blog/zero-cgo-pure-go-ml-inference/" class="blog-card">
         <div class="tag">Architecture</div>
         <h3>Zero CGo: Why We Chose Pure Go for ML Inference</h3>
         <p>How Zerfoo runs GPU-accelerated inference without a single CGo call. dlopen, purego, and assembly trampolines.</p>
       </a>
-      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/blog/gguf-industry-standard-format.md" target="_blank" class="blog-card">
+      <a href="/docs/blog/gguf-industry-standard-format/" class="blog-card">
         <div class="tag">Design</div>
         <h3>GGUF: Why We Standardized on the Industry Format</h3>
         <p>From a custom protobuf format to GGUF — and deleting 7,500 lines of code in the process.</p>
       </a>
-      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/blog/ml-inference-go-service-10-lines.md" target="_blank" class="blog-card">
+      <a href="/docs/blog/ml-inference-go-service-10-lines/" class="blog-card">
         <div class="tag">Tutorial</div>
         <h3>Add ML Inference to Your Go Service in 10 Lines</h3>
         <p>From zero to LLM inference without changing your build, deployment, or architecture.</p>
@@ -608,7 +608,7 @@ $ curl <span class="str">http://localhost:8080/v1/chat/completions</span> \
       </div>
     </div>
     <div style="margin-top:24px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
-      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/getting-started.md" target="_blank" class="btn btn-primary">Getting Started Guide</a>
+      <a href="/docs/getting-started/installation/" class="btn btn-primary">Getting Started Guide</a>
       <a href="https://github.com/zerfoo/zerfoo" target="_blank" class="btn btn-secondary">View Source</a>
     </div>
   </div>
@@ -623,8 +623,9 @@ $ curl <span class="str">http://localhost:8080/v1/chat/completions</span> \
     </div>
     <div class="right">
       <a href="https://github.com/zerfoo" target="_blank">GitHub</a>
-      <a href="https://pkg.go.dev/github.com/zerfoo/zerfoo" target="_blank">Go Docs</a>
-      <a href="https://github.com/zerfoo/zerfoo/blob/main/docs/getting-started.md" target="_blank">Getting Started</a>
+      <a href="/docs/">Documentation</a>
+      <a href="/docs/getting-started/installation/">Getting Started</a>
+      <a href="https://pkg.go.dev/github.com/zerfoo/zerfoo" target="_blank">Go Reference</a>
     </div>
   </div>
 </footer>
