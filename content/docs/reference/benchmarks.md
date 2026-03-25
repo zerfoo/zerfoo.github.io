@@ -34,7 +34,24 @@ All official benchmarks run on a single machine:
 
 ## Results
 
-### Current Baseline (2026-03-20)
+### Multi-Model Comparison: Zerfoo vs Ollama (2026-03-25)
+
+Head-to-head decode throughput on DGX Spark GB10. 128 tokens, 3 runs (median),
+greedy sampling (temp=0), commit `294aa43` (v1.19.0), Ollama v0.17.7.
+
+| Model | Architecture | Size | Zerfoo (tok/s) | Ollama (tok/s) | Ratio | Winner |
+|-------|-------------|------|----------------|----------------|-------|--------|
+| Gemma 3 1B Q4_K_M | gemma3 | 1B | **236.38** | 204.37 | **1.16x** | Zerfoo |
+| DeepSeek R1 1.5B Q4_K_M | deepseek2 | 1.5B | **192.83** | 184.75 | **1.04x** | Zerfoo |
+| Llama 3.2 3B Q4_K_M | llama | 3B | 96.06 | 97.66 | 0.98x | ~Even |
+| Mistral 7B Q4_K_M | mistral | 7B | 11.61 | 46.77 | 0.25x | Ollama |
+
+Zerfoo wins on small models (1B-1.5B). Llama 3.2 3B is at parity. Mistral 7B
+has a known performance regression ([investigation pending](https://github.com/zerfoo/zerfoo/issues)).
+Additional architectures (Qwen, Phi, Mixtral, Command-R, Falcon, Mamba, RWKV)
+will be added as GGUF files are acquired and parser compatibility is resolved.
+
+### Gemma 3 1B Baseline (2026-03-20)
 
 | Model | Format | Tok/s | CUDA Graph | Tokens | Notes |
 |-------|--------|-------|------------|--------|-------|
@@ -84,22 +101,20 @@ dp4a benefits will appear at larger batch sizes where compute becomes the bottle
 
 ## Comparison: Zerfoo vs Ollama vs llama.cpp
 
-All measurements use a fixed prompt ("The meaning of life is") and measure
-steady-state decode throughput (tokens per second) after warm-up.
+### Gemma 3 1B (Primary Benchmark)
 
 | Framework | Version | Tokens | Tok/s (decode) | CUDA Graphs | Notes |
 |-----------|---------|--------|----------------|-------------|-------|
-| **Zerfoo** | v0.x | 256 | **245.15** | Yes | Q4_K_M loaded, re-quantized to Q4_0 at load time |
-| **Zerfoo** | v0.x | 512 | **248.47** | Yes | Throughput stable at longer sequences |
-| **Zerfoo** | v0.x | 50 | 219.17 | Yes | Lower at short sequences (warm-up amortization) |
+| **Zerfoo** | v1.19.0 | 128 | **236.38** | Yes | Multi-model benchmark (2026-03-25) |
+| **Zerfoo** | v0.x | 256 | **244.45** | Yes | Single-model baseline (2026-03-20) |
 | **Zerfoo** | v0.x | 256 | 174.44 | No | Without CUDA graph capture |
-| **Ollama** | latest | 989 | 203.60 | N/A | Default settings, `ollama run gemma3:1b` |
+| **Ollama** | 0.17.7 | 128 | 204.37 | N/A | Multi-model benchmark (2026-03-25) |
 | **llama.cpp** | b5220+ | 256 | ~210-230 | No | Estimated from community reports on GB10-class hardware |
 
 **Summary:**
 
-- Zerfoo with CUDA graphs: **245 tok/s** (+20% vs Ollama, ~10-15% vs llama.cpp)
-- Zerfoo without CUDA graphs: **174 tok/s** (CUDA graph capture adds +40%)
+- Zerfoo with CUDA graphs: **236 tok/s** (+16% vs Ollama, ~5-10% vs llama.cpp)
+- Zerfoo without CUDA graphs: **174 tok/s** (CUDA graph capture adds +36%)
 - Ollama: **204 tok/s** (uses llama.cpp under the hood with its own overhead)
 
 > **Note on llama.cpp numbers:** Direct llama.cpp measurements on this exact
@@ -134,7 +149,7 @@ steady-state decode throughput (tokens per second) after warm-up.
 
 | GPU | Zerfoo (est.) | Notes |
 |-----|---------------|-------|
-| DGX Spark GB10 | 245 tok/s | Measured |
+| DGX Spark GB10 | 236 tok/s | Measured (Gemma 3 1B, 2026-03-25) |
 | RTX 4090 | TBD | Community contributions welcome |
 | RTX 3090 | TBD | Community contributions welcome |
 | A100 80GB | TBD | Community contributions welcome |
