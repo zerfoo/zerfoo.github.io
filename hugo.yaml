@@ -1,0 +1,21 @@
+baseURL: https://zerfoo.feza.ai/
+languageCode: en-us
+title: Zerfoo - ML Framework for Go
+theme: hugo-book
+
+params:
+  BookTheme: auto
+  BookToC: true
+  BookSection: docs
+  BookLogo: /logo.png
+  BookMenuBundle: /menu
+  BookSearch: true
+  BookDateFormat: January 2, 2006
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+  highlight:
+    style: monokai
+    lineNos: false
