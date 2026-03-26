@@ -48,8 +48,14 @@ Ollama v0.17.7.
 | Mistral 7B Q4_K_M | mistral | 7B | **44** | 46.77 | **0.94x** | ~Even |
 
 Zerfoo wins on small models (1B-1.5B). Llama 3.2 3B is at parity. Mistral 7B
-was previously at 11 tok/s due to a performance regression; after the fix it
-runs at 44 tok/s (0.94x Ollama -- near parity).
+was previously at 11 tok/s due to a performance regression; after the shared
+memory fix it runs at 44 tok/s (0.94x Ollama -- near parity).
+
+> **Note on Mistral output quality:** Mistral 7B throughput is correct at 44
+> tok/s, but output quality is pending a tokenizer fix. The Mistral tokenizer
+> requires SentencePiece byte-fallback handling that is not yet fully
+> implemented. Throughput numbers are valid; text coherence will improve once
+> the tokenizer fix lands.
 Additional architectures (Qwen, Phi, Mixtral, Command-R, Falcon, Mamba, RWKV)
 will be added as GGUF files are acquired and parser compatibility is resolved.
 

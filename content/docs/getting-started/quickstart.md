@@ -301,7 +301,7 @@ fmt.Printf("Tokens: %d, Duration: %s\n", result.TokenCount, result.Duration)
 ## Next Steps
 
 - [Installation](/docs/getting-started/installation) -- detailed installation and platform support
-- [GPU Setup](/docs/getting-started/gpu-setup) -- configure CUDA, ROCm, or OpenCL for hardware-accelerated inference
+- [GPU Setup](/docs/architecture/gpu-setup) -- configure CUDA, ROCm, or OpenCL for hardware-accelerated inference
 - [API Server](/docs/deployment) -- serve models behind an OpenAI-compatible HTTP API
 - [API Reference](/docs/api) -- full API documentation
 - [Tutorials](/docs/tutorials) -- step-by-step guides for common tasks

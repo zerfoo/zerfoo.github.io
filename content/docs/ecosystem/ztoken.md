@@ -90,6 +90,10 @@ tok := ztoken.NewBPETokenizer(vocab, merges, special, false)
 tok.SetSentencePiece(true)
 ```
 
+## SentencePiece Unigram Support
+
+As of v0.3.0, ztoken supports SentencePiece unigram tokenization in addition to BPE. Unigram models (used by T5, mBART, and some multilingual models) are detected automatically when loading from HuggingFace JSON or GGUF files with `tokenizer.ggml.model = "llama"` and a unigram vocabulary.
+
 ## Supported Models
 
 ztoken is compatible with tokenizers from:
