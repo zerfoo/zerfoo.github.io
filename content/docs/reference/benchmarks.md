@@ -45,10 +45,11 @@ Ollama v0.17.7.
 | Gemma 3 1B Q4_K_M | gemma3 | 1B | **241** (256 tok) | 201 (256 tok) | **1.20x** | Zerfoo |
 | DeepSeek R1 1.5B Q4_K_M | deepseek2 | 1.5B | **192.83** | 184.75 | **1.04x** | Zerfoo |
 | Llama 3.2 3B Q4_K_M | llama | 3B | 96.06 | 97.66 | 0.98x | ~Even |
-| Mistral 7B Q4_K_M | mistral | 7B | 11.61 | 46.77 | 0.25x | Ollama |
+| Mistral 7B Q4_K_M | mistral | 7B | **44** | 46.77 | **0.94x** | ~Even |
 
 Zerfoo wins on small models (1B-1.5B). Llama 3.2 3B is at parity. Mistral 7B
-has a known performance regression ([investigation pending](https://github.com/zerfoo/zerfoo/issues)).
+was previously at 11 tok/s due to a performance regression; after the fix it
+runs at 44 tok/s (0.94x Ollama -- near parity).
 Additional architectures (Qwen, Phi, Mixtral, Command-R, Falcon, Mamba, RWKV)
 will be added as GGUF files are acquired and parser compatibility is resolved.
 
