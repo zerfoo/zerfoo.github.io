@@ -38,7 +38,7 @@ This is a hard problem for a real inference pipeline. Token embeddings require l
 
 Zerfoo solves this by splitting the execution plan into three regions:
 
-```
+```text
 [Pre-capture: CPU-touching ops]  [Capture region: GPU-only ops]  [Post-capture: CPU-touching ops]
 ```
 

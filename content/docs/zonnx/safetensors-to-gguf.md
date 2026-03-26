@@ -17,7 +17,7 @@ This guide covers converting SafeTensors models (typically BERT and RoBERTa) to 
 
 zonnx expects a directory as input for SafeTensors conversion. The directory must contain:
 
-```
+```text
 model-dir/
   config.json           # required -- model configuration
   model.safetensors     # required -- model weights

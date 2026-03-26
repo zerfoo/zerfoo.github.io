@@ -27,7 +27,7 @@ Zerfoo is an ecosystem of six independent repositories (each with its own `go.mo
 
 **Dependency graph:**
 
-```
+```text
 float16 --+
 float8  --+--> ztensor --> zerfoo
 ztoken --+
@@ -96,7 +96,7 @@ go tool cover -html=coverage.out -o coverage.html
 
 We use [Conventional Commits](https://www.conventionalcommits.org/) for automated versioning with release-please.
 
-```
+```text
 <type>(<scope>): <description>
 ```
 
@@ -112,7 +112,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) for automate
 
 Examples:
 
-```
+```text
 feat(inference): add Qwen 2.5 architecture support
 fix(generate): correct KV cache eviction for sliding window attention
 perf(layers): fuse SiLU and gate projection into single kernel

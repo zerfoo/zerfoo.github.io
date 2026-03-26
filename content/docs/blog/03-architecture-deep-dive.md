@@ -12,7 +12,7 @@ Zerfoo runs LLM inference in Go at 245 tokens/second — 20% faster than Ollama.
 
 When you call `zerfoo.Load("google/gemma-3-4b")` followed by `m.Chat("Hello")`, the following pipeline executes:
 
-```
+```text
 GGUF file on disk
   -> Parse GGUF header + tensors
   -> Map tensor names to canonical form
@@ -86,7 +86,7 @@ func init() {
 
 The `general.architecture` field in the GGUF metadata determines which builder is invoked. Most decoder-only architectures share the same transformer body through `buildTransformerGraph()`, which constructs:
 
-```
+```text
 Embed -> [RMSNorm -> GQA -> Add -> RMSNorm -> FFN(SiLU-gate) -> Add] x N -> RMSNorm -> LMHead
 ```
 

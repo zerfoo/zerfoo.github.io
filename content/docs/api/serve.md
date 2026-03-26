@@ -6,7 +6,7 @@ bookToc: true
 
 # Package serve
 
-```
+```go
 import "github.com/zerfoo/zerfoo/serve"
 ```
 

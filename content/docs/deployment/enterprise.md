@@ -1027,7 +1027,7 @@ readinessProbe:
 
 Zerfoo logs every request with structured fields:
 
-```
+```text
 method=POST path=/v1/chat/completions model=gemma-3-1b prompt_tokens=0 completion_tokens=0 latency_ms=142 status_code=200
 ```
 
@@ -1093,7 +1093,7 @@ sidecar. SHA-256 is computed and stored on upload.
 
 #### Directory Layout
 
-```
+```text
 /models/
   llama-3-7b-q4_k_m/
     model.gguf
@@ -1176,7 +1176,7 @@ a new load would exceed the budget.
 
 ### Architecture
 
-```
+```text
 Request -> ModelManager.Get("model-id")
               |
               +-- Already loaded? -> promote to MRU, return handle

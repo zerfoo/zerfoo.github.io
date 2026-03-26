@@ -11,7 +11,7 @@ Zerfoo is a family of Go modules that together form a complete ML inference and 
 
 ## Dependency Graph
 
-```
+```text
 float16 ──┐
            ├──► ztensor ──► zerfoo
 float8  ──┘                    ▲

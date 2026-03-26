@@ -32,7 +32,7 @@ This means:
 
 The detection flow:
 
-```
+```text
 1. dlopen("libcudart.so.12") or dlopen("libcudart.so")
 2. dlsym each required symbol (cudaMalloc, cudaFree, cudaMemcpy, ...)
 3. Optionally resolve CUDA graph symbols (cudaStreamBeginCapture, ...)
@@ -55,7 +55,7 @@ nvidia-smi
 
 Expected output shows your GPU model, driver version, and CUDA version:
 
-```
+```text
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 560.35.03              Driver Version: 560.35.03      CUDA Version: 12.6     |
 |-----------------------------------------+------------------------+----------------------+
@@ -182,7 +182,7 @@ rocm-smi
 
 Expected output:
 
-```
+```text
 ========================= ROCm System Management Interface =========================
 ================================ Concise Info =======================================
 GPU  Temp   AvgPwr  SCLK    MCLK    Fan   Perf  PwrCap  VRAM%  GPU%

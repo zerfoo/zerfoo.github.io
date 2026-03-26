@@ -80,7 +80,7 @@ Start a chat session with `zerfoo run`:
 zerfoo run gemma-3-1b-q4
 ```
 
-```
+```text
 Model loaded. Type your message (Ctrl-D to quit).
 
 > What is the capital of France?

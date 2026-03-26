@@ -27,7 +27,7 @@ so registration errors surface immediately at program startup.
 
 Extension packages should follow the naming pattern:
 
-```
+```text
 github.com/<user>/zerfoo-ext-<name>
 ```
 

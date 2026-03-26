@@ -55,7 +55,7 @@ go run main.go
 
 To request a specific quantization, append it to the ID:
 
-```
+```text
 google/gemma-3-4b/Q8_0
 ```
 
@@ -107,7 +107,7 @@ zerfoo run gemma-3-1b-q4
 
 This starts an interactive chat session:
 
-```
+```text
 Model loaded. Type your message (Ctrl-D to quit).
 
 > What is the capital of France?

@@ -168,7 +168,7 @@ statement (with special-case detection -- e.g., Mistral models report
 Most decoder-only architectures share the same transformer body. The shared
 logic lives in `buildTransformerGraph()`, which constructs:
 
-```
+```text
 Embed -> [RMSNorm -> GQA -> Add -> RMSNorm -> FFN(SiLU-gate) -> Add] x N -> RMSNorm -> LMHead
 ```
 
@@ -433,7 +433,7 @@ flowchart TD
 
 A quick reference for where to find things:
 
-```
+```text
 zerfoo/
   cmd/                    CLI entry points (run, serve, pull, predict, tokenize)
   inference/

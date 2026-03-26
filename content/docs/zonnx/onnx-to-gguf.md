@@ -36,7 +36,7 @@ The `--api-key` flag takes precedence over the `HF_API_KEY` environment variable
 
 After downloading, you should have at minimum:
 
-```
+```text
 models/
   model.onnx
   config.json        # optional but recommended for metadata
