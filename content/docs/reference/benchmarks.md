@@ -34,28 +34,22 @@ All official benchmarks run on a single machine:
 
 ## Results
 
-### Multi-Model Comparison: Zerfoo vs Ollama (2026-03-25)
+### Multi-Model Comparison: Zerfoo vs Ollama (2026-03-27)
 
-Head-to-head decode throughput on DGX Spark GB10. 128 tokens (except where
-noted), 3 runs (median), greedy sampling (temp=0), commit `294aa43` (v1.19.0),
-Ollama v0.17.7.
+Head-to-head decode throughput on DGX Spark GB10. 128 tokens, 3 runs (median),
+greedy sampling (temp=0). All models produce coherent output after the GQA
+repeat fix (ztensor v0.6.3) and flash attention decode fix (zerfoo v1.25.5).
 
-| Model | Architecture | Size | Zerfoo (tok/s) | Ollama (tok/s) | Ratio | Winner |
-|-------|-------------|------|----------------|----------------|-------|--------|
-| Gemma 3 1B Q4_K_M | gemma3 | 1B | **241** (256 tok) | 201 (256 tok) | **1.20x** | Zerfoo |
-| DeepSeek R1 1.5B Q4_K_M | deepseek2 | 1.5B | **192.83** | 184.75 | **1.04x** | Zerfoo |
-| Llama 3.2 3B Q4_K_M | llama | 3B | 96.06 | 97.66 | 0.98x | ~Even |
-| Mistral 7B Q4_K_M | mistral | 7B | **44** | 46.77 | **0.94x** | ~Even |
+| Model | Size | Zerfoo (tok/s) | Ollama (tok/s) | Ratio | Winner |
+|-------|------|----------------|----------------|-------|--------|
+| Gemma 3 1B Q4_K_M | 1B | **235** | 188 | **1.25x** | Zerfoo |
+| DeepSeek R1 1.5B Q4_K_M | 1.5B | **186** | 167 | **1.11x** | Zerfoo |
+| Llama 3.2 3B Q4_K_M | 3B | 92 | 93 | 0.99x | ~Even |
+| Mistral 7B Q5_K_M | 7B | 44 | 44 | 1.00x | ~Even |
 
-Zerfoo wins on small models (1B-1.5B). Llama 3.2 3B is at parity. Mistral 7B
-was previously at 11 tok/s due to a performance regression; after the shared
-memory fix it runs at 44 tok/s (0.94x Ollama -- near parity).
+**Summary:** 25% faster on small models, parity at 7B. All four models now
+produce coherent output with CUDA graph capture enabled.
 
-> **Note on Mistral output quality:** Mistral 7B throughput is correct at 44
-> tok/s, but output quality is pending a tokenizer fix. The Mistral tokenizer
-> requires SentencePiece byte-fallback handling that is not yet fully
-> implemented. Throughput numbers are valid; text coherence will improve once
-> the tokenizer fix lands.
 Additional architectures (Qwen, Phi, Mixtral, Command-R, Falcon, Mamba, RWKV)
 will be added as GGUF files are acquired and parser compatibility is resolved.
 
@@ -113,17 +107,17 @@ dp4a benefits will appear at larger batch sizes where compute becomes the bottle
 
 | Framework | Version | Tokens | Tok/s (decode) | CUDA Graphs | Notes |
 |-----------|---------|--------|----------------|-------------|-------|
-| **Zerfoo** | v1.19.0 | 256 | **241** | Yes | Multi-model benchmark (2026-03-25) |
+| **Zerfoo** | latest | 128 | **235** | Yes | Multi-model benchmark (2026-03-27) |
 | **Zerfoo** | v0.x | 256 | **244.45** | Yes | Single-model baseline (2026-03-20) |
 | **Zerfoo** | v0.x | 256 | 174.44 | No | Without CUDA graph capture |
-| **Ollama** | 0.17.7 | 128 | 204.37 | N/A | Multi-model benchmark (2026-03-25) |
+| **Ollama** | 0.17.7 | 128 | 188 | N/A | Multi-model benchmark (2026-03-27) |
 | **llama.cpp** | b5220+ | 256 | ~210-230 | No | Estimated from community reports on GB10-class hardware |
 
 **Summary:**
 
-- Zerfoo with CUDA graphs: **241 tok/s** (+20% vs Ollama, ~5-15% vs llama.cpp)
-- Zerfoo without CUDA graphs: **174 tok/s** (CUDA graph capture adds +38%)
-- Ollama: **204 tok/s** (uses llama.cpp under the hood with its own overhead)
+- Zerfoo with CUDA graphs: **235 tok/s** (+25% vs Ollama, ~5-15% vs llama.cpp)
+- Zerfoo without CUDA graphs: **174 tok/s** (CUDA graph capture adds +35%)
+- Ollama: **188 tok/s** (uses llama.cpp under the hood with its own overhead)
 
 > **Note on llama.cpp numbers:** Direct llama.cpp measurements on this exact
 > DGX Spark unit are pending. The estimate above is based on published community
@@ -157,7 +151,7 @@ dp4a benefits will appear at larger batch sizes where compute becomes the bottle
 
 | GPU | Zerfoo (est.) | Notes |
 |-----|---------------|-------|
-| DGX Spark GB10 | 241 tok/s | Measured (Gemma 3 1B, 2026-03-25) |
+| DGX Spark GB10 | 235 tok/s | Measured (Gemma 3 1B, 2026-03-27) |
 | RTX 4090 | TBD | Community contributions welcome |
 | RTX 3090 | TBD | Community contributions welcome |
 | A100 80GB | TBD | Community contributions welcome |
