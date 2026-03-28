@@ -276,7 +276,7 @@ The `-p 0` flag skips prompt processing to measure pure decode throughput.
 git clone https://github.com/zerfoo/zerfoo.git
 cd zerfoo
 
-# 2. Ensure Go 1.25+ is installed
+# 2. Ensure Go 1.26+ is installed
 go version
 
 # 3. Download dependencies

@@ -10,7 +10,7 @@ Go from zero to working LLM inference in under 5 minutes.
 
 ## Prerequisites
 
-- **Go 1.25 or later** -- [download Go](https://go.dev/dl/)
+- **Go 1.26 or later** -- [download Go](https://go.dev/dl/)
 - A machine with at least 4 GB of RAM (8 GB recommended for 7B models)
 - Optional: an NVIDIA GPU with CUDA drivers for hardware-accelerated inference
 
@@ -18,7 +18,7 @@ Verify your Go installation:
 
 ```bash
 go version
-# go version go1.25.0 linux/amd64
+# go version go1.26.1 linux/amd64
 ```
 
 ## Install the CLI

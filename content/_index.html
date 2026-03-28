@@ -386,7 +386,7 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
       <div class="feat">
         <div class="icon">&#129518;</div>
         <h3>Type-Safe Generics</h3>
-        <p>Go 1.25 generics throughout — <code>tensor.Numeric</code> constraint for compile-time type safety across float32, float16, bfloat16, float8, and quantized types.</p>
+        <p>Go 1.26 generics throughout — <code>tensor.Numeric</code> constraint for compile-time type safety across float32, float16, bfloat16, float8, and quantized types.</p>
       </div>
       <div class="feat">
         <div class="icon">&#128202;</div>
@@ -427,7 +427,7 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
   <div class="wrap">
     <div class="section-head">
       <h2>Faster than Ollama</h2>
-      <p>Benchmarked on NVIDIA DGX Spark (GB10), CUDA 13.0, Go 1.25. Gemma 3 1B Q4_K_M, 256 tokens.</p>
+      <p>Benchmarked on NVIDIA DGX Spark (GB10), CUDA 13.0, Go 1.26. Gemma 3 1B Q4_K_M, 256 tokens.</p>
     </div>
     <div style="overflow-x:auto">
       <table class="bench-table">
@@ -490,14 +490,24 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
       <p>28 architectures across 16 model families. Load any GGUF model from HuggingFace.</p>
     </div>
     <div class="model-grid">
-      <div class="model-card"><div class="name">Gemma 3</div><div class="status prod">Production</div></div>
-      <div class="model-card"><div class="name">Llama 3</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">Gemma 3/3n</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">Llama 3/4</div><div class="status prod">Production</div></div>
       <div class="model-card"><div class="name">Qwen 2.5</div><div class="status prod">Production</div></div>
-      <div class="model-card"><div class="name">Mistral</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">Mistral/Mixtral</div><div class="status prod">Production</div></div>
       <div class="model-card"><div class="name">Phi 3/4</div><div class="status prod">Production</div></div>
-      <div class="model-card"><div class="name">DeepSeek V3</div><div class="status prod">Production</div></div>
-      <div class="model-card"><div class="name">SigLIP</div><div class="status">Vision encoder</div></div>
-      <div class="model-card"><div class="name">Kimi-VL</div><div class="status">Vision-language</div></div>
+      <div class="model-card"><div class="name">DeepSeek V3</div><div class="status prod">MLA + MoE</div></div>
+      <div class="model-card"><div class="name">GPT-2</div><div class="status prod">TinyStories</div></div>
+      <div class="model-card"><div class="name">Nemotron-H</div><div class="status">Hybrid Mamba+MoE</div></div>
+      <div class="model-card"><div class="name">MiniMax M2</div><div class="status">Sigmoid MoE</div></div>
+      <div class="model-card"><div class="name">Command R</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">Falcon</div><div class="status prod">Production</div></div>
+      <div class="model-card"><div class="name">RWKV</div><div class="status">Linear attention</div></div>
+      <div class="model-card"><div class="name">Mamba/Mamba 3</div><div class="status">State space</div></div>
+      <div class="model-card"><div class="name">Jamba</div><div class="status">Hybrid SSM</div></div>
+      <div class="model-card"><div class="name">Whisper</div><div class="status">Audio</div></div>
+      <div class="model-card"><div class="name">LLaVA/Qwen-VL</div><div class="status">Vision-language</div></div>
+      <div class="model-card"><div class="name">BERT</div><div class="status">Encoder</div></div>
+      <div class="model-card"><div class="name">Granite TS</div><div class="status">Time series</div></div>
     </div>
     <div style="text-align:center;margin-top:32px">
       <p style="color:var(--fg3);font-size:.875rem">Uses GGUF as the sole model format. Compatible with llama.cpp, Ollama, LM Studio, and GPT4All model files.</p>
@@ -529,10 +539,18 @@ The capital of France is Paris.
 <span class="cmt"># OpenAI-compatible API server</span>
 $ zerfoo serve gemma-3-1b-q4 --port 8080
 
-<span class="cmt"># Query with any OpenAI client</span>
+<span class="cmt"># QuaRot weight fusion for uniform 4-bit quantization</span>
+$ zerfoo run --quarot model.gguf
+
+<span class="cmt"># Train an EAGLE speculative decoding head</span>
+$ zerfoo eagle-train --model model.gguf --corpus data.txt --output eagle.gguf
+
+<span class="cmt"># Convert MHA model to Multi-head Latent Attention</span>
+$ zerfoo transmla --input model.gguf --output model-mla.gguf
+
+<span class="cmt"># Multi-LoRA serving (per-request adapter selection)</span>
 $ curl <span class="str">http://localhost:8080/v1/chat/completions</span> \
-    -H <span class="str">"Content-Type: application/json"</span> \
-    -d <span class="str">'{"model":"gemma-3-1b-q4","messages":[{"role":"user","content":"Hello!"}]}'</span></pre>
+    -d <span class="str">'{"model":"gemma3-1b:my-lora","messages":[{"role":"user","content":"Hello!"}]}'</span></pre>
     </div>
   </div>
 </section>

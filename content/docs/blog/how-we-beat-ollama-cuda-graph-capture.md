@@ -80,7 +80,7 @@ All benchmark numbers follow the methodology documented in `docs/benchmarking-me
 | Memory | 128 GB unified LPDDR5x |
 | GPU SM | sm_121 |
 | Model | Gemma 3 1B Q4_K_M (GGUF) |
-| Go | 1.25.0 |
+| Go | 1.26.1 |
 | CUDA | 13.0 |
 | Measurement | Decode-only throughput (tok/s) |
 | Token count | 256 tokens minimum |

@@ -41,7 +41,7 @@ Each repo is versioned and released independently. Do not treat this as a monore
 
 ### Prerequisites
 
-- **Go 1.25+** (generics with `tensor.Numeric` constraint)
+- **Go 1.26+** (generics with `tensor.Numeric` constraint)
 - **Git**
 - **CUDA Toolkit** (optional, for GPU-accelerated tests and development)
 

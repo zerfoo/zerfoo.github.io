@@ -6,13 +6,13 @@ bookToc: true
 
 # Installation
 
-Zerfoo requires **Go 1.25 or later**. [Download Go](https://go.dev/dl/) if you haven't already.
+Zerfoo requires **Go 1.26 or later**. [Download Go](https://go.dev/dl/) if you haven't already.
 
 Verify your Go installation:
 
 ```bash
 go version
-# go version go1.25.0 linux/amd64
+# go version go1.26.1 linux/amd64
 ```
 
 ## As a Library
@@ -53,7 +53,7 @@ Zerfoo builds with **zero CGo by default** (`CGO_ENABLED=0`). GPU acceleration i
 
 ## Platform Support
 
-Zerfoo compiles on any platform supported by Go 1.25, including **Linux**, **macOS**, and **Windows**.
+Zerfoo compiles on any platform supported by Go 1.26, including **Linux**, **macOS**, and **Windows**.
 
 GPU acceleration is available on:
 
