@@ -236,7 +236,7 @@ for usage of deprecated symbols.
 These are additive and do not require migration, but are worth knowing about:
 
 - **Architecture registry** -- `inference.RegisterArchitecture` / `inference.ListArchitectures` for pluggable model support.
-- **24 architectures (13 model families)** -- Llama 3, Gemma 3, Mistral, Qwen 2, Phi 3/4, DeepSeek V3, Falcon, Command R, Mixtral, RWKV, Jamba, Mamba 3, and more.
+- **28 architectures (16 model families)** -- Llama 3/4, Gemma 3/3n, Mistral, Qwen 2, Phi 3/4, DeepSeek V3, GPT-2, Nemotron-H, MiniMax M2, Falcon, Command R, Mixtral, RWKV, Jamba, Mamba 3, Whisper, and more.
 - **Speculative decoding** -- `inference.Model.SpeculativeGenerate` and `generate.WithSpeculativeDraft`.
 - **Paged KV cache** -- `generate.WithPagedKV` for memory-efficient serving.
 - **Prefix caching** -- `generate.WithPrefixCache` for shared system prompt reuse.
