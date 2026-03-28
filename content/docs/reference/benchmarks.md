@@ -183,8 +183,9 @@ QWENVL_GGUF_PATH=/path/to/qwenvl.gguf go test -run TestQwenVL_VisionPipeline -co
 
 | Date | Milestone | Tok/s | Notes |
 |------|-----------|-------|-------|
+| 2026-03-27 | Multi-model benchmark (3-run median) | 235 | +25% vs Ollama (188 tok/s) |
 | 2026-03-17 | dp4a + arena reuse | 245.15 | Parity at batch=1 (memory-bound); dp4a benefits at larger batches |
-| 2026-03-17 | Q4_0 re-quant restored | 244.99 | +32% vs regression, +20% vs Ollama |
+| 2026-03-17 | Q4_0 re-quant restored | 244.99 | +32% vs regression |
 | 2026-03-14 | CUDA graph capture | 234.30 | +26% vs non-graph baseline |
 | 2026-03-13 | GPU-first pipeline | 6.84 | +33.6% from D2H elimination |
 | 2026-03-13 | Graph compilation | 6.86 | +5% from worker pool |

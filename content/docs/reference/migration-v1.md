@@ -236,7 +236,7 @@ for usage of deprecated symbols.
 These are additive and do not require migration, but are worth knowing about:
 
 - **Architecture registry** -- `inference.RegisterArchitecture` / `inference.ListArchitectures` for pluggable model support.
-- **12 model architectures** -- Llama 3, Gemma 3, Mistral, Qwen 2, Phi 3/4, DeepSeek V3, Falcon, Command R, Mixtral, RWKV, Jamba, Mamba 3.
+- **24 architectures (13 model families)** -- Llama 3, Gemma 3, Mistral, Qwen 2, Phi 3/4, DeepSeek V3, Falcon, Command R, Mixtral, RWKV, Jamba, Mamba 3, and more.
 - **Speculative decoding** -- `inference.Model.SpeculativeGenerate` and `generate.WithSpeculativeDraft`.
 - **Paged KV cache** -- `generate.WithPagedKV` for memory-efficient serving.
 - **Prefix caching** -- `generate.WithPrefixCache` for shared system prompt reuse.
@@ -245,6 +245,15 @@ These are additive and do not require migration, but are worth knowing about:
 - **Tool calling** -- `serve.Tool` / `serve.ToolChoice` in the OpenAI-compatible API.
 - **Vision and audio** -- multimodal inference with LLaVA, SigLIP, and Whisper.
 - **Batch generation** -- `inference.Model.GenerateBatch` and `serve.BatchScheduler`.
+- **EAGLE speculative decoding** -- `generate.WithEAGLE` for speculative draft-and-verify with built-in head training.
+- **Q4_K fused GEMV** -- 14x faster dequantize-and-multiply kernel for Q4_K quantized weights.
+- **TransMLA** -- MHA-to-MLA conversion for DeepSeek-style multi-head latent attention.
+- **Multi-LoRA per-request serving** -- `serve.WithLoRA` routes each request to a different LoRA adapter.
+- **BitNet ternary inference** -- native 1.58-bit ternary weight support for BitNet models.
+- **Native Sparse Attention (NSA)** -- sparse attention patterns for long-context efficiency.
+- **Hybrid CPU/GPU MoE** -- expert routing across CPU and GPU for memory-constrained deployments.
+- **Quantized KV cache** -- `generate.WithKVQuant("q4")` and `generate.WithKVQuant("q3")` for reduced KV memory.
+- **Time-series inference** -- Granite TTM/FlowState models, 21x faster than Python granite-tsfm.
 - **Continuous batching** -- `serve.NewBatchScheduler` for high-throughput serving.
 - **LoRA/QLoRA fine-tuning** -- `training/lora/` and `cmd/finetune`.
 - **FSDP distributed training** -- `distributed/fsdp/` with NCCL AllGather/ReduceScatter.

@@ -6,7 +6,9 @@ bookToc: true
 
 # Zerfoo vs Ollama vs llama.cpp: A Performance Comparison
 
-When we set out to build an ML inference framework in Go, the first question everyone asked was: "Can Go actually compete with C++ on inference throughput?" The answer is yes. On Gemma 3 1B Q4_K_M, Zerfoo decodes at **245 tokens/second** — 20% faster than Ollama and 10-15% faster than llama.cpp on the same NVIDIA DGX Spark hardware.
+> **Update 2026-03-27:** Benchmarks updated to multi-model 3-run median methodology. Gemma 3 1B: 235 tok/s (Ollama 188 tok/s) = 25% faster. Additional models: DeepSeek R1 1.5B (186 vs 167, +11%), Llama 3.2 3B (92 vs 93, parity), Mistral 7B (44 vs 44, parity).
+
+When we set out to build an ML inference framework in Go, the first question everyone asked was: "Can Go actually compete with C++ on inference throughput?" The answer is yes. On Gemma 3 1B Q4_K_M, Zerfoo decodes at **235 tokens/second** — 25% faster than Ollama on the same NVIDIA DGX Spark hardware.
 
 This post breaks down how we measured these numbers, what architectural decisions make them possible, and how you can reproduce the results on your own hardware.
 
@@ -14,15 +16,14 @@ This post breaks down how we measured these numbers, what architectural decision
 
 All measurements use the same GGUF model file, the same prompt ("The meaning of life is"), and measure steady-state decode throughput after warm-up on an NVIDIA DGX Spark (GB10 Grace Blackwell, 128 GB unified LPDDR5x, CUDA 13.0).
 
-| Framework | Tok/s (decode) | CUDA Graphs | Notes |
-|-----------|----------------|-------------|-------|
-| **Zerfoo** | **245.15** | Yes | Q4_K_M loaded, re-quantized to Q4_0 at load time |
-| **Zerfoo** | **248.47** | Yes | 512 tokens — throughput stable at longer sequences |
-| **Zerfoo** | 174.44 | No | Without CUDA graph capture |
-| **Ollama** | 203.60 | N/A | Default settings, `ollama run gemma3:1b` |
-| **llama.cpp** | ~210-230 | No | Estimated from community reports on GB10-class hardware |
+| Model | Zerfoo (tok/s) | Ollama (tok/s) | Speedup |
+|-------|----------------|----------------|---------|
+| **Gemma 3 1B Q4_K_M** | **235** | 188 | **+25%** |
+| DeepSeek R1 1.5B | 186 | 167 | +11% |
+| Llama 3.2 3B | 92 | 93 | parity |
+| Mistral 7B | 44 | 44 | parity |
 
-The gap between Zerfoo with and without CUDA graphs (245 vs 174 tok/s) tells the story: CUDA graph capture alone accounts for a 40% throughput increase. The remaining advantage over Ollama comes from fused kernels and zero CGo overhead.
+All numbers are 3-run medians from the 2026-03-27 multi-model benchmark. The gap narrows at larger model sizes where memory bandwidth dominates over kernel launch overhead. On smaller models where kernel fusion matters most, Zerfoo's CUDA graph capture and fused kernels provide a clear advantage.
 
 ## Why Zerfoo Is Faster
 
@@ -122,7 +123,7 @@ We've measured on the DGX Spark so far. We expect similar relative performance o
 
 | GPU | Zerfoo (est.) | Status |
 |-----|---------------|--------|
-| DGX Spark GB10 | 245 tok/s | Measured |
+| DGX Spark GB10 | 235 tok/s | Measured (3-run median, 2026-03-27) |
 | RTX 4090 | TBD | Community contributions welcome |
 | RTX 3090 | TBD | Community contributions welcome |
 | A100 80GB | TBD | Community contributions welcome |

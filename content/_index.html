@@ -8,7 +8,7 @@ layout: home
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zerfoo — Machine Learning Framework for Go</title>
-<meta name="description" content="Train, run, and serve ML models in your Go application. 245 tok/s on Gemma 3 1B — 20% faster than Ollama. Pure Go, zero CGo.">
+<meta name="description" content="Train, run, and serve ML models in your Go application. 235 tok/s on Gemma 3 1B — 25% faster than Ollama. Pure Go, zero CGo.">
 <meta name="theme-color" content="#8B5CF6">
 <link rel="icon" href="zerfoo.svg" type="image/svg+xml">
 <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.classList.add(t)})()</script>
@@ -266,8 +266,8 @@ footer .right a:hover{color:var(--fg)}
     <h1>Machine learning for Go.<br><span class="grad">Pure Go. Zero CGo.</span></h1>
     <p class="sub">Train, run, and serve ML models in your Go application. One import, GPU-accelerated at runtime, no C compiler needed.</p>
     <div class="stats">
-      <div class="stat"><div class="num">245 tok/s</div><div class="label">Gemma 3 1B Q4_K_M</div></div>
-      <div class="stat"><div class="num">+20%</div><div class="label">faster than Ollama</div></div>
+      <div class="stat"><div class="num">235 tok/s</div><div class="label">Gemma 3 1B Q4_K_M</div></div>
+      <div class="stat"><div class="num">+25%</div><div class="label">faster than Ollama</div></div>
       <div class="stat"><div class="num">99.5%</div><div class="label">CUDA graph coverage</div></div>
       <div class="stat"><div class="num">0</div><div class="label">CGo calls</div></div>
     </div>
@@ -403,6 +403,21 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
         <h3>ARM NEON SIMD</h3>
         <p>Hand-written ARM NEON and x86 AVX2 assembly for CPU-bound operations — GEMM, RMSNorm, RoPE, SiLU, softmax. Competitive CPU performance without a GPU.</p>
       </div>
+      <div class="feat">
+        <div class="icon">&#9889;</div>
+        <h3>EAGLE Speculative Decoding</h3>
+        <p>Built-in EAGLE draft head with integrated training. Speculative decoding accelerates generation by drafting multiple tokens per step and verifying in parallel.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#128640;</div>
+        <h3>Q4_K Fused GEMV</h3>
+        <p>Fused dequantize-and-multiply kernel for Q4_K quantized weights — 14x faster than the unfused path. Keeps decode throughput high on quantized models.</p>
+      </div>
+      <div class="feat">
+        <div class="icon">&#128270;</div>
+        <h3>Advanced Serving</h3>
+        <p>Multi-LoRA per-request serving, quantized KV cache (Q4/Q3), and hybrid CPU/GPU MoE routing. Production-grade features for multi-tenant deployments.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -424,8 +439,8 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
             <td class="highlight">Zerfoo</td>
             <td>
               <div class="bench-bar">
-                <div class="bar" style="width:min(245px,60vw)"></div>
-                <div class="val">245 tok/s</div>
+                <div class="bar" style="width:min(235px,60vw)"></div>
+                <div class="val">235 tok/s</div>
               </div>
             </td>
             <td>Pure Go, zero CGo, CUDA graph capture, fused kernels</td>
@@ -434,8 +449,8 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
             <td>Ollama</td>
             <td>
               <div class="bench-bar">
-                <div class="bar" style="width:min(204px,50vw);background:var(--bg3)"></div>
-                <div class="val">204 tok/s</div>
+                <div class="bar" style="width:min(188px,50vw);background:var(--bg3)"></div>
+                <div class="val">188 tok/s</div>
               </div>
             </td>
             <td>llama.cpp C++ backend, same model, same hardware</td>
@@ -451,7 +466,7 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
           <tr><th>Date</th><th>Milestone</th><th>Tok/s</th><th>Improvement</th></tr>
         </thead>
         <tbody>
-          <tr><td>Mar 17</td><td class="highlight">dp4a INT8 + arena reuse</td><td class="highlight">245</td><td>+20% vs Ollama</td></tr>
+          <tr><td>Mar 27</td><td class="highlight">Multi-model benchmark (3-run median)</td><td class="highlight">235</td><td>+25% vs Ollama</td></tr>
           <tr><td>Mar 17</td><td>Q4_0 re-quant restored</td><td>245</td><td>+32% vs regression</td></tr>
           <tr><td>Mar 14</td><td>CUDA graph capture</td><td>234</td><td>+26% vs non-graph</td></tr>
           <tr><td>Mar 13</td><td>GPU-first pipeline</td><td>103</td><td>D2H elimination</td></tr>
@@ -472,7 +487,7 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
   <div class="wrap">
     <div class="section-head">
       <h2>Supported models</h2>
-      <p>Production-ready transformer architectures. Load any GGUF model from HuggingFace.</p>
+      <p>24 architectures across 13 model families. Load any GGUF model from HuggingFace.</p>
     </div>
     <div class="model-grid">
       <div class="model-card"><div class="name">Gemma 3</div><div class="status prod">Production</div></div>
@@ -575,7 +590,7 @@ $ curl <span class="str">http://localhost:8080/v1/chat/completions</span> \
       <a href="/docs/blog/how-we-beat-ollama-cuda-graph-capture/" class="blog-card">
         <div class="tag">Performance</div>
         <h3>How We Beat Ollama: CUDA Graph Capture in Pure Go</h3>
-        <p>CUDA graph capture and fused kernels took Zerfoo from 186 tok/s to 245 tok/s. A deep dive into making the decode path GPU-only.</p>
+        <p>CUDA graph capture and fused kernels took Zerfoo from 186 tok/s to 235 tok/s. A deep dive into making the decode path GPU-only.</p>
       </a>
       <a href="/docs/blog/zero-cgo-pure-go-ml-inference/" class="blog-card">
         <div class="tag">Architecture</div>

@@ -6,7 +6,7 @@ bookToc: true
 
 # Migrating from Ollama to Zerfoo
 
-Ollama is a popular tool for running LLMs locally. If you're using Ollama today and want to switch to Zerfoo — whether for the 20% throughput improvement, Go-native embedding, or OpenAI API compatibility — this guide walks you through the migration step by step.
+Ollama is a popular tool for running LLMs locally. If you're using Ollama today and want to switch to Zerfoo — whether for the 25% throughput improvement, Go-native embedding, or OpenAI API compatibility — this guide walks you through the migration step by step.
 
 ## Why Migrate?
 
@@ -14,7 +14,7 @@ Before diving into the how, here's what Zerfoo offers over Ollama:
 
 | Feature | Ollama | Zerfoo |
 |---------|--------|--------|
-| Decode throughput (Gemma 3 1B Q4_K_M) | 204 tok/s | **245 tok/s** (+20%) |
+| Decode throughput (Gemma 3 1B Q4_K_M) | 188 tok/s | **235 tok/s** (+25%) |
 | Language | Go + CGo (wraps llama.cpp) | Pure Go (zero CGo) |
 | Embeddable as library | No (separate process) | **Yes** (`go get` and import) |
 | OpenAI-compatible API | Yes | Yes |
@@ -306,7 +306,7 @@ Migrating from Ollama to Zerfoo is straightforward because both use GGUF models 
 3. Change the base URL in your API clients
 4. Optionally, embed inference directly in your Go application
 
-The reward: 20% faster decode throughput, zero-CGo builds, in-process inference, and a single-binary deployment model.
+The reward: 25% faster decode throughput, zero-CGo builds, in-process inference, and a single-binary deployment model.
 
 ```bash
 go install github.com/zerfoo/zerfoo/cmd/zerfoo@latest

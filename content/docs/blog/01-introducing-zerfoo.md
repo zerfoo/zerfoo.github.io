@@ -98,7 +98,9 @@ This means every tool, library, and application built for the OpenAI API works w
 
 ## Performance
 
-On an NVIDIA DGX Spark with Gemma 3 1B Q4_K_M, Zerfoo achieves **245 tokens/second** decode throughput — 20% faster than Ollama (204 tok/s) on the same hardware. This comes from three key optimizations:
+> **Update 2026-03-27:** Benchmarks updated to reflect multi-model 3-run median methodology. Gemma 3 1B: 235 tok/s (was 245), Ollama: 188 tok/s (was 204). The speedup is now 25%.
+
+On an NVIDIA DGX Spark with Gemma 3 1B Q4_K_M, Zerfoo achieves **235 tokens/second** decode throughput — 25% faster than Ollama (188 tok/s) on the same hardware. This comes from three key optimizations:
 
 - **CUDA graph capture** with 99.5% instruction coverage eliminates per-kernel launch overhead
 - **Fused kernels** (FusedAddRMSNorm, FusedSiluGate, FusedQKNormRoPE) reduce memory round-trips
