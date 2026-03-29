@@ -215,6 +215,40 @@ func WithGeneratorKVDtype(dtype string) GeneratorOption
 
 Sets the KV cache storage dtype. Supported: `"fp32"` (default), `"fp16"`. FP16 halves KV cache memory bandwidth.
 
+### func WithTieredKV
+
+```go
+func WithTieredKV(cfg TieredKVStoreConfig) GeneratorOption
+```
+
+Enables a three-tier KV cache with automatic promotion and demotion across hot (GPU/CPU memory), warm (compressed CPU memory), and cold (disk) storage. Layers are tracked by access count; infrequently-used layers are demoted to lower tiers while hot layers remain in uncompressed memory. An async prefetch goroutine moves cold layers back to hot before they are needed.
+
+When `cfg.ColdDir` is empty, a temporary directory is created and deleted by `Close()`. When `cfg.ColdDir` is non-empty, the directory is left intact after `Close()` so cold-tier files can be reused across generation calls.
+
+```go
+gen := generate.NewGenerator[float32](graph, tok, engine, cfg,
+    generate.WithTieredKV(generate.TieredKVStoreConfig{
+        ChunkSize:        64,   // warm-tier compression block size
+        DemoteThreshold:  2,    // demote layers accessed < 2 times
+        PromoteThreshold: 8,    // promote layers accessed ≥ 8 times
+        // ColdDir: "/var/cache/kv",  // omit to use a temp dir
+    }),
+)
+```
+
+`TieredKVStoreConfig` fields:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `NumLayers` | `int` | model config | Number of transformer layers |
+| `MaxSeqLen` | `int` | model config | Maximum sequence length |
+| `ChunkSize` | `int` | 64 | Compression chunk size for warm tier |
+| `DemoteThreshold` | `int` | 2 | Access count below which layers are demoted |
+| `PromoteThreshold` | `int` | 5 | Access count above which layers are promoted |
+| `ColdDir` | `string` | "" (temp dir) | Directory for cold-tier binary files |
+
+`NumLayers` and `MaxSeqLen` are filled from the model config if left at zero.
+
 ### func WithMetrics
 
 ```go
