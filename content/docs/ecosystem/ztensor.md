@@ -6,7 +6,7 @@ bookToc: true
 
 # ztensor
 
-GPU-accelerated tensor, compute engine, and computation graph library for Go.
+GPU-accelerated tensor, compute engine, and computation graph library for Go. Current version: **v0.15.0**.
 
 ```bash
 go get github.com/zerfoo/ztensor
@@ -129,6 +129,25 @@ The `graph` package provides a computation graph compiler with operator fusion p
 | `internal/xblas/` | ARM NEON and x86 AVX2 SIMD assembly |
 | `internal/gpuapi/` | GPU Runtime Abstraction Layer (CUDA/ROCm/OpenCL) |
 | `internal/codegen/` | Megakernel code generator |
+
+## What's New in v0.15.0
+
+### MmapStorage.SliceElements
+
+`MmapStorage.SliceElements` provides zero-copy slicing of mmap'd tensor elements. It returns a view into the memory-mapped region without copying data, making expert weight extraction in mixture-of-experts models efficient:
+
+```go
+// Extract expert weights directly from the mmap'd file — no allocation
+expertWeights, err := mmapStorage.SliceElements(expertOffset, expertSize)
+```
+
+This replaces the previous pattern of copying expert weights into a new tensor before each forward pass.
+
+### Streaming GEMM for mmap'd Tensors
+
+`internal/xblas` now includes a streaming GEMM path for mmap'd weight tensors. Instead of paging in the entire weight matrix before computation, the kernel tiles over the mmap region in cache-sized chunks, keeping memory bandwidth proportional to the active tile rather than the full matrix.
+
+This enables over-RAM CPU inference: a model whose weights exceed physical RAM can run without GPU, with the OS paging tensor data from NVMe on demand. Combined with `MmapStorage.SliceElements`, a 229B MoE model runs on a 128 GB machine with no configuration flags.
 
 ## Dependencies
 
