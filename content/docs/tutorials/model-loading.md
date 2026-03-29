@@ -22,12 +22,23 @@ Zerfoo uses GGUF as its sole model format. When you call `inference.LoadFile`, t
 model, err := inference.LoadFile("path/to/model.gguf")
 ```
 
-GGUF files are mmap-friendly. On Unix platforms, you can enable memory-mapped loading to avoid copying weights into the Go heap:
+GGUF files are memory-mapped by default. Zerfoo maps the file into virtual address space and lets the OS page tensor data from disk on demand — no weights are copied into heap memory at startup. This gives near-instant load times regardless of model size and allows loading models larger than physical RAM.
 
 ```go
+// mmap is the default — no options needed
+model, err := inference.LoadFile("model.gguf")
+
+// Opt out for heap loading (required for CUDA graph capture)
 model, err := inference.LoadFile("model.gguf",
-	inference.WithMmap(true),
+	inference.WithMmap(false),
 )
+```
+
+Split GGUF files (the `-NNNNN-of-NNNNN.gguf` naming convention used for 70B+ models from HuggingFace) are detected and loaded automatically. Pass the path to the first shard — Zerfoo finds the rest.
+
+```go
+// Load a 138 GB model (3 shards) on a 128 GB machine
+model, err := inference.LoadFile("MiniMax-M2-Q4_K_M-00001-of-00003.gguf")
 ```
 
 ## Supported Architectures

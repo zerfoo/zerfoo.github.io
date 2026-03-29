@@ -180,7 +180,7 @@ Sets the KV cache storage dtype. Supported: `"fp32"` (default), `"fp16"`. FP16 h
 func WithMmap(enabled bool) Option
 ```
 
-Enables memory-mapped model loading. When true, the file is mapped into memory using `syscall.Mmap` instead of `os.ReadFile`, avoiding heap allocation for model weights. Only supported on unix platforms.
+Controls memory-mapped model loading. **mmap is enabled by default.** When enabled, the GGUF file is mapped into virtual address space using `syscall.Mmap`; tensor data is paged from disk on demand by the OS, avoiding heap allocation and enabling models larger than physical RAM. Pass `false` to use heap loading, which is required for CUDA graph capture. Only supported on unix platforms.
 
 ---
 

@@ -270,6 +270,7 @@ footer .right a:hover{color:var(--fg)}
       <div class="stat"><div class="num">+25%</div><div class="label">faster than Ollama</div></div>
       <div class="stat"><div class="num">99.5%</div><div class="label">CUDA graph coverage</div></div>
       <div class="stat"><div class="num">0</div><div class="label">CGo calls</div></div>
+      <div class="stat"><div class="num">229B</div><div class="label">on 128 GB via mmap</div></div>
     </div>
     <div class="actions">
       <a href="#quickstart" class="btn btn-primary">Get Started</a>
@@ -418,6 +419,11 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
         <h3>Advanced Serving</h3>
         <p>Multi-LoRA per-request serving, quantized KV cache (Q4/Q3), and hybrid CPU/GPU MoE routing. Production-grade features for multi-tenant deployments.</p>
       </div>
+      <div class="feat">
+        <div class="icon">&#128190;</div>
+        <h3>Models Larger Than RAM</h3>
+        <p>GGUF files are memory-mapped by default. Tensor data is paged from NVMe on demand — the OS handles it. A 229B MiniMax-M2 (138 GB, 3 shards) runs on 128 GB with no flags and no configuration.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -472,6 +478,25 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
           <tr><td>Mar 13</td><td>GPU-first pipeline</td><td>103</td><td>D2H elimination</td></tr>
           <tr><td>Mar 12</td><td>ARM NEON SIMD</td><td>8.15</td><td>+18.8% CPU accel</td></tr>
           <tr><td>Mar 10</td><td>Initial CPU baseline</td><td>3.60</td><td>Starting point</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:40px">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:16px">Models larger than RAM</h3>
+      <p style="color:var(--text2);margin-bottom:16px;font-size:0.9rem">GGUF files are memory-mapped by default. Tensor data pages from NVMe on demand — no flags needed. Split GGUF shards are detected and mapped automatically.</p>
+      <table class="bench-table">
+        <thead>
+          <tr><th>Model</th><th>Params</th><th>File size</th><th>RAM available</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="highlight">MiniMax-M2 Q4_K_M</td>
+            <td>229B MoE</td>
+            <td>138 GB (3 shards)</td>
+            <td>128 GB</td>
+            <td>Loads and generates text</td>
+          </tr>
         </tbody>
       </table>
     </div>
