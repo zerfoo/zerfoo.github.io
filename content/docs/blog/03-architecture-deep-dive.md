@@ -6,7 +6,7 @@ bookToc: true
 
 # Inside Zerfoo: An Architecture Deep Dive
 
-Zerfoo runs LLM inference in Go at 235 tokens/second — 25% faster than Ollama. This post walks through the internal architecture that makes that possible, from loading a GGUF file to streaming tokens over an OpenAI-compatible API.
+Zerfoo runs LLM inference in Go at 241 tokens/second — 28% faster than Ollama. This post walks through the internal architecture that makes that possible, from loading a GGUF file to streaming tokens over an OpenAI-compatible API.
 
 ## The Pipeline
 
@@ -122,7 +122,7 @@ CUDA graph capture is the single biggest performance optimization in Zerfoo. It 
 
 Without CUDA graphs, each decode step dispatches hundreds of individual kernel launches — each one costing 5-10 microseconds of CPU-GPU synchronization. With CUDA graphs, the entire decode step is a single graph launch.
 
-The numbers tell the story: 235 tok/s with CUDA graphs vs 174 tok/s without — a 35% throughput increase from this optimization alone.
+The numbers tell the story: 241 tok/s with CUDA graphs vs 174 tok/s without — a 35% throughput increase from this optimization alone.
 
 Zerfoo achieves 99.5% instruction coverage in CUDA graph capture. The remaining 0.5% consists of operations that must run on the host: token sampling and tokenizer lookup.
 

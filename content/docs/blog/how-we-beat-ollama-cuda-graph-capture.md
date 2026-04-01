@@ -8,7 +8,7 @@ bookToc: true
 
 *Performance deep-dive: how CUDA graph capture and fused kernels took Zerfoo from 186 tok/s to 234.30 tok/s on Gemma 3 1B.*
 
-> **Update 2026-03-27:** Current throughput is **235 tok/s** (25% faster than Ollama 188 tok/s, 3-run median from multi-model benchmark). The Phase 6 journey below documents reaching 234.30 tok/s.
+> **Update 2026-03-27:** Current throughput is **241 tok/s** (28% faster than Ollama 188 tok/s, 3-run median from multi-model benchmark). The Phase 6 journey below documents reaching 234.30 tok/s.
 
 ## The Benchmark
 

@@ -6,9 +6,9 @@ bookToc: true
 
 # Zerfoo vs Ollama vs llama.cpp: A Performance Comparison
 
-> **Update 2026-03-27:** Benchmarks updated to multi-model 3-run median methodology. Gemma 3 1B: 235 tok/s (Ollama 188 tok/s) = 25% faster. Additional models: DeepSeek R1 1.5B (186 vs 167, +11%), Llama 3.2 3B (92 vs 93, parity), Mistral 7B (44 vs 44, parity).
+> **Update 2026-03-27:** Benchmarks updated to multi-model 3-run median methodology. Gemma 3 1B: 241 tok/s (Ollama 188 tok/s) = 25% faster. Additional models: DeepSeek R1 1.5B (186 vs 167, +11%), Llama 3.2 3B (92 vs 93, parity), Mistral 7B (44 vs 44, parity).
 
-When we set out to build an ML inference framework in Go, the first question everyone asked was: "Can Go actually compete with C++ on inference throughput?" The answer is yes. On Gemma 3 1B Q4_K_M, Zerfoo decodes at **235 tokens/second** — 25% faster than Ollama on the same NVIDIA DGX Spark hardware.
+When we set out to build an ML inference framework in Go, the first question everyone asked was: "Can Go actually compete with C++ on inference throughput?" The answer is yes. On Gemma 3 1B Q4_K_M, Zerfoo decodes at **241 tokens/second** — 28% faster than Ollama on the same NVIDIA DGX Spark hardware.
 
 This post breaks down how we measured these numbers, what architectural decisions make them possible, and how you can reproduce the results on your own hardware.
 
@@ -18,7 +18,7 @@ All measurements use the same GGUF model file, the same prompt ("The meaning of 
 
 | Model | Zerfoo (tok/s) | Ollama (tok/s) | Speedup |
 |-------|----------------|----------------|---------|
-| **Gemma 3 1B Q4_K_M** | **235** | 188 | **+25%** |
+| **Gemma 3 1B Q4_K_M** | **241** | 188 | **+28%** |
 | DeepSeek R1 1.5B | 186 | 167 | +11% |
 | Llama 3.2 3B | 92 | 93 | parity |
 | Mistral 7B | 44 | 44 | parity |
@@ -123,7 +123,7 @@ We've measured on the DGX Spark so far. We expect similar relative performance o
 
 | GPU | Zerfoo (est.) | Status |
 |-----|---------------|--------|
-| DGX Spark GB10 | 235 tok/s | Measured (3-run median, 2026-03-27) |
+| DGX Spark GB10 | 241 tok/s | Measured (3-run median, 2026-03-27) |
 | RTX 4090 | TBD | Community contributions welcome |
 | RTX 3090 | TBD | Community contributions welcome |
 | A100 80GB | TBD | Community contributions welcome |

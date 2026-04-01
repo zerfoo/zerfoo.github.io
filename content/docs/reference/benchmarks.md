@@ -42,7 +42,7 @@ repeat fix (ztensor v0.6.3) and flash attention decode fix (zerfoo v1.25.5).
 
 | Model | Size | Zerfoo (tok/s) | Ollama (tok/s) | Ratio | Winner |
 |-------|------|----------------|----------------|-------|--------|
-| Gemma 3 1B Q4_K_M | 1B | **235** | 188 | **1.25x** | Zerfoo |
+| Gemma 3 1B Q4_K_M | 1B | **241** | 188 | **1.28x** | Zerfoo |
 | DeepSeek R1 1.5B Q4_K_M | 1.5B | **186** | 167 | **1.11x** | Zerfoo |
 | Llama 3.2 3B Q4_K_M | 3B | 92 | 93 | 0.99x | ~Even |
 | Mistral 7B Q5_K_M | 7B | 44 | 44 | 1.00x | ~Even |
@@ -95,7 +95,7 @@ dp4a benefits will appear at larger batch sizes where compute becomes the bottle
 
 | Model | Format | Tok/s | CUDA Graph % | Output Quality | Tokens |
 |-------|--------|-------|-------------|----------------|--------|
-| Gemma 3 1B | GGUF Q4_K | 232.21 | 99.5% | Baseline | 256 |
+| Gemma 3 1B | GGUF Q4_K | 241 | 99.5% | Baseline | 256 |
 | Llama 3 1B | GGUF | 12.93 | 2.0% | Semi-coherent | 20 |
 | Qwen 2.5 0.5B | GGUF | 15.79 | 1.8% | Working (rep. penalty helps) | 20 |
 | Mistral 7B | GGUF | 3.94 | 1.2% | Working (spaces fixed) | 20 |
@@ -115,7 +115,7 @@ dp4a benefits will appear at larger batch sizes where compute becomes the bottle
 
 **Summary:**
 
-- Zerfoo with CUDA graphs: **235 tok/s** (+25% vs Ollama, ~5-15% vs llama.cpp)
+- Zerfoo with CUDA graphs: **241 tok/s** (+25% vs Ollama, ~5-15% vs llama.cpp)
 - Zerfoo without CUDA graphs: **174 tok/s** (CUDA graph capture adds +35%)
 - Ollama: **188 tok/s** (uses llama.cpp under the hood with its own overhead)
 
@@ -151,7 +151,7 @@ dp4a benefits will appear at larger batch sizes where compute becomes the bottle
 
 | GPU | Zerfoo (est.) | Notes |
 |-----|---------------|-------|
-| DGX Spark GB10 | 235 tok/s | Measured (Gemma 3 1B, 2026-03-27) |
+| DGX Spark GB10 | 241 tok/s | Measured (Gemma 3 1B, 2026-03-27) |
 | RTX 4090 | TBD | Community contributions welcome |
 | RTX 3090 | TBD | Community contributions welcome |
 | A100 80GB | TBD | Community contributions welcome |

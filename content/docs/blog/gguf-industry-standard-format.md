@@ -29,7 +29,7 @@ The alignment matters. Because tensor data is aligned and the format has no enco
 
 ## Why Not ONNX, SafeTensors, or PyTorch Pickle
 
-**ONNX** stores computation graphs, not just weights. An ONNX file contains every operation in the model as decomposed primitives -- a single RMSNorm becomes Pow, ReduceMean, Add, Sqrt, Div, Mul. This is useful for portability across runtimes, but it means every inference framework has to either execute the decomposed graph (slow) or reverse-engineer fused operations from the decomposed pattern (fragile). For Zerfoo, the decomposed ONNX graph produced 4-16 tok/s. The architecture-specific GGUF path produces 232+ tok/s. The computation graph belongs in the framework, not the file format.
+**ONNX** stores computation graphs, not just weights. An ONNX file contains every operation in the model as decomposed primitives -- a single RMSNorm becomes Pow, ReduceMean, Add, Sqrt, Div, Mul. This is useful for portability across runtimes, but it means every inference framework has to either execute the decomposed graph (slow) or reverse-engineer fused operations from the decomposed pattern (fragile). For Zerfoo, the decomposed ONNX graph produced 4-16 tok/s. The architecture-specific GGUF path produces 241+ tok/s. The computation graph belongs in the framework, not the file format.
 
 **SafeTensors** is a good format. It is simple, memory-mappable, and safe (no arbitrary code execution). But it stores unquantized weights only. It has no built-in support for the quantization types that make small-model inference practical (Q4_0, Q4_K_M, Q8_0). And its ecosystem is smaller -- while HuggingFace supports SafeTensors natively, GGUF has become the de facto standard for quantized inference models.
 

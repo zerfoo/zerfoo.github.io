@@ -163,6 +163,6 @@ If you're running Go in production and using LLMs, give Zerfoo a try:
 go get github.com/zerfoo/zerfoo@latest
 ```
 
-Seven lines of code to run inference. One binary to deploy. 235 tokens per second on a DGX Spark.
+Seven lines of code to run inference. One binary to deploy. 241 tokens per second on a DGX Spark.
 
 The question isn't whether Go can do ML. The question is why your production inference is still running in a different language than the rest of your stack.

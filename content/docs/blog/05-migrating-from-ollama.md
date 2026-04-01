@@ -14,7 +14,7 @@ Before diving into the how, here's what Zerfoo offers over Ollama:
 
 | Feature | Ollama | Zerfoo |
 |---------|--------|--------|
-| Decode throughput (Gemma 3 1B Q4_K_M) | 188 tok/s | **235 tok/s** (+25%) |
+| Decode throughput (Gemma 3 1B Q4_K_M) | 188 tok/s | **241 tok/s** (+25%) |
 | Language | Go + CGo (wraps llama.cpp) | Pure Go (zero CGo) |
 | Embeddable as library | No (separate process) | **Yes** (`go get` and import) |
 | OpenAI-compatible API | Yes | Yes |

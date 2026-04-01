@@ -290,7 +290,7 @@ Lower-bit quantization reduces memory and increases throughput at the cost of qu
 | Q8_0 | 8 | 4x smaller | Faster | Good |
 | Q4_K_M | 4 | 8x smaller | Fastest | Acceptable |
 
-For most use cases, **Q4_K_M** provides the best speed/quality tradeoff. Zerfoo achieves **234 tok/s on Gemma 3 1B Q4_K_M** on a DGX Spark (19% faster than Ollama on the same hardware).
+For most use cases, **Q4_K_M** provides the best speed/quality tradeoff. Zerfoo achieves **241 tok/s on Gemma 3 1B Q4_K_M** on a DGX Spark (19% faster than Ollama on the same hardware).
 
 ### Compute precision
 
