@@ -8,7 +8,7 @@ layout: home
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zerfoo — Machine Learning Framework for Go</title>
-<meta name="description" content="Train, run, and serve ML models in your Go application. 235 tok/s on Gemma 3 1B — 25% faster than Ollama. Pure Go, zero CGo.">
+<meta name="description" content="Train, run, and serve ML models in your Go application. 241 tok/s on Gemma 3 1B — 28% faster than Ollama. Pure Go, zero CGo.">
 <meta name="theme-color" content="#8B5CF6">
 <link rel="icon" href="zerfoo.svg" type="image/svg+xml">
 <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.classList.add(t)})()</script>
@@ -266,7 +266,7 @@ footer .right a:hover{color:var(--fg)}
     <h1>Machine learning for Go.<br><span class="grad">Pure Go. Zero CGo.</span></h1>
     <p class="sub">Train, run, and serve ML models in your Go application. One import, GPU-accelerated at runtime, no C compiler needed.</p>
     <div class="stats">
-      <div class="stat"><div class="num">235 tok/s</div><div class="label">Gemma 3 1B Q4_K_M</div></div>
+      <div class="stat"><div class="num">241 tok/s</div><div class="label">Gemma 3 1B Q4_K_M</div></div>
       <div class="stat"><div class="num">+25%</div><div class="label">faster than Ollama</div></div>
       <div class="stat"><div class="num">99.5%</div><div class="label">CUDA graph coverage</div></div>
       <div class="stat"><div class="num">0</div><div class="label">CGo calls</div></div>
@@ -445,8 +445,8 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
             <td class="highlight">Zerfoo</td>
             <td>
               <div class="bench-bar">
-                <div class="bar" style="width:min(235px,60vw)"></div>
-                <div class="val">235 tok/s</div>
+                <div class="bar" style="width:min(241px,60vw)"></div>
+                <div class="val">241 tok/s</div>
               </div>
             </td>
             <td>Pure Go, zero CGo, CUDA graph capture, fused kernels</td>
@@ -472,7 +472,7 @@ result, _ := m.<span class="fn">Generate</span>(ctx, <span class="str">"Generate
           <tr><th>Date</th><th>Milestone</th><th>Tok/s</th><th>Improvement</th></tr>
         </thead>
         <tbody>
-          <tr><td>Mar 27</td><td class="highlight">Multi-model benchmark (3-run median)</td><td class="highlight">235</td><td>+25% vs Ollama</td></tr>
+          <tr><td>Mar 27</td><td class="highlight">Multi-model benchmark (3-run median)</td><td class="highlight">241</td><td>+28% vs Ollama</td></tr>
           <tr><td>Mar 17</td><td>Q4_0 re-quant restored</td><td>245</td><td>+32% vs regression</td></tr>
           <tr><td>Mar 14</td><td>CUDA graph capture</td><td>234</td><td>+26% vs non-graph</td></tr>
           <tr><td>Mar 13</td><td>GPU-first pipeline</td><td>103</td><td>D2H elimination</td></tr>
@@ -642,7 +642,7 @@ $ curl <span class="str">http://localhost:8080/v1/chat/completions</span> \
       <a href="/docs/blog/how-we-beat-ollama-cuda-graph-capture/" class="blog-card">
         <div class="tag">Performance</div>
         <h3>How We Beat Ollama: CUDA Graph Capture in Pure Go</h3>
-        <p>CUDA graph capture and fused kernels took Zerfoo from 186 tok/s to 235 tok/s. A deep dive into making the decode path GPU-only.</p>
+        <p>CUDA graph capture and fused kernels took Zerfoo from 186 tok/s to 241 tok/s. A deep dive into making the decode path GPU-only.</p>
       </a>
       <a href="/docs/blog/zero-cgo-pure-go-ml-inference/" class="blog-card">
         <div class="tag">Architecture</div>

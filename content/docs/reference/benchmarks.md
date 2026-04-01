@@ -107,7 +107,7 @@ dp4a benefits will appear at larger batch sizes where compute becomes the bottle
 
 | Framework | Version | Tokens | Tok/s (decode) | CUDA Graphs | Notes |
 |-----------|---------|--------|----------------|-------------|-------|
-| **Zerfoo** | latest | 128 | **235** | Yes | Multi-model benchmark (2026-03-27) |
+| **Zerfoo** | latest | 128 | **241** | Yes | Multi-model benchmark (2026-03-27) |
 | **Zerfoo** | v0.x | 256 | **244.45** | Yes | Single-model baseline (2026-03-20) |
 | **Zerfoo** | v0.x | 256 | 174.44 | No | Without CUDA graph capture |
 | **Ollama** | 0.17.7 | 128 | 188 | N/A | Multi-model benchmark (2026-03-27) |
@@ -115,7 +115,7 @@ dp4a benefits will appear at larger batch sizes where compute becomes the bottle
 
 **Summary:**
 
-- Zerfoo with CUDA graphs: **241 tok/s** (+25% vs Ollama, ~5-15% vs llama.cpp)
+- Zerfoo with CUDA graphs: **241 tok/s** (+28% vs Ollama)
 - Zerfoo without CUDA graphs: **174 tok/s** (CUDA graph capture adds +35%)
 - Ollama: **188 tok/s** (uses llama.cpp under the hood with its own overhead)
 
@@ -183,7 +183,7 @@ QWENVL_GGUF_PATH=/path/to/qwenvl.gguf go test -run TestQwenVL_VisionPipeline -co
 
 | Date | Milestone | Tok/s | Notes |
 |------|-----------|-------|-------|
-| 2026-03-27 | Multi-model benchmark (3-run median) | 235 | +25% vs Ollama (188 tok/s) |
+| 2026-03-31 | Multi-model benchmark (3-run median) | 241 | +28% vs Ollama (188 tok/s) |
 | 2026-03-17 | dp4a + arena reuse | 245.15 | Parity at batch=1 (memory-bound); dp4a benefits at larger batches |
 | 2026-03-17 | Q4_0 re-quant restored | 244.99 | +32% vs regression |
 | 2026-03-14 | CUDA graph capture | 234.30 | +26% vs non-graph baseline |
