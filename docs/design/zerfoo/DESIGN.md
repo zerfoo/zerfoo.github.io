@@ -12,7 +12,7 @@ User-authorized choice: complete rebrand. Existing Hugo architecture and documen
 
 ## Identity
 
-A geometric Z cut from a copper tile. The top and bottom offsets evoke a passage through the runtime. Warm neutral backgrounds, warm white primary text, copper accent. Inter is self-hosted. Logo is vector and scales down to the favicon. No trademark-registration claim.
+Horizon: two broad curved bands forming an open passage. The upper band echoes the website horizon; the lower band rises toward it. The user selected this direction from three rendered concepts on September 6, 2026. The production mark is a clean, transparent SVG with a separate dark-tile favicon and a currentColor monochrome variant. Warm neutral backgrounds, warm white primary text, copper accent. Inter is self-hosted. Logo is vector and scales down to the favicon. No trademark-registration claim.
 
 Token layer: static/css/site.css. Named spacing scale 4, 8, 12, 16, 24, 32, 48, 64, 96, 128. Radii 8, 16, 24, pill. Type roles: display, section, card, body, small, mono label. Documentation extends its existing Sass variables with warm light/dark pairs.
 
