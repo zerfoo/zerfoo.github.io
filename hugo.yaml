@@ -1,19 +1,19 @@
 baseURL: https://zerfoo.feza.ai/
 languageCode: en-us
-title: Zerfoo - ML Framework for Go
+title: Zerfoo — AI inference. Native to Go.
 theme: hugo-book
 
 params:
-  description: "Production-grade ML inference and training framework for Go. 245 tok/s on Gemma 3 1B. Zero CGo. 20 model architectures."
+  description: "Run language models inside your Go application. Open-source inference, GGUF loading, streaming, and serving. Apache 2.0."
   BookTheme: auto
   BookToC: true
   BookSection: docs
-  BookLogo: /logo.png
+  BookLogo: /zerfoo.svg
   BookMenuBundle: /menu
   BookSearch: true
   BookDateFormat: January 2, 2006
   images:
-    - /zerfoo.png
+    - /social-card.png
 
 enableRobotsTXT: true
 

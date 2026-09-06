@@ -1,0 +1,46 @@
+{
+  "report": [
+    {
+      "width": 320,
+      "colorScheme": "light",
+      "checks": "render, overflow, tabs, keyboard, clipboard, FAQ, docs; mobile menu where applicable"
+    },
+    {
+      "width": 320,
+      "colorScheme": "dark",
+      "checks": "render, overflow, tabs, keyboard, clipboard, FAQ, docs; mobile menu where applicable"
+    },
+    {
+      "width": 390,
+      "colorScheme": "light",
+      "checks": "render, overflow, tabs, keyboard, clipboard, FAQ, docs; mobile menu where applicable"
+    },
+    {
+      "width": 390,
+      "colorScheme": "dark",
+      "checks": "render, overflow, tabs, keyboard, clipboard, FAQ, docs; mobile menu where applicable"
+    },
+    {
+      "width": 1024,
+      "colorScheme": "light",
+      "checks": "render, overflow, tabs, keyboard, clipboard, FAQ, docs; mobile menu where applicable"
+    },
+    {
+      "width": 1024,
+      "colorScheme": "dark",
+      "checks": "render, overflow, tabs, keyboard, clipboard, FAQ, docs; mobile menu where applicable"
+    },
+    {
+      "width": 1440,
+      "colorScheme": "light",
+      "checks": "render, overflow, tabs, keyboard, clipboard, FAQ, docs; mobile menu where applicable"
+    },
+    {
+      "width": 1440,
+      "colorScheme": "dark",
+      "checks": "render, overflow, tabs, keyboard, clipboard, FAQ, docs; mobile menu where applicable"
+    }
+  ],
+  "errors": [],
+  "animation": "passed"
+}
