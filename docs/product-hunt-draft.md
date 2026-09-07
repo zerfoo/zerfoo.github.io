@@ -16,8 +16,6 @@ Zerfoo is the result. It works as a library, a CLI, or an OpenAI-compatible HTTP
 
 I’ve published benchmark evidence and a model matrix because architecture support is easy to claim and harder to verify. Start with the model matrix, try the quickstart, and tell me where the experience breaks down for your workload.
 
-I’d especially love feedback from Go developers embedding inference in a real service. What would make this useful enough to adopt?
-
 Website: https://zerfoo.feza.ai/?utm_source=producthunt&utm_medium=launch&utm_campaign=zerfoo
 Repository: https://github.com/zerfoo/zerfoo
 
