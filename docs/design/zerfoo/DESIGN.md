@@ -31,7 +31,7 @@ Four phases: 800 ms model-to-runtime beam, 800 ms runtime pulse, 800 ms runtime-
 
 Framework checkout README and docs/verified-models.md inspected September 6, 2026. Throughput source: results/benchmark-2026-03-27.json, with 235/188, 186/167, 92/93, 44/44 comparison. This corrects stale 241/245 figures on the previous website. The framework working tree contained staged changes and an unresolved docs/benchmarks.md conflict; those files were not changed by this website work.
 
-Founder positioning follows ndungu.dev (repositioned 2026-09-05): agentic development consulting for engineering teams using Claude Code and other coding agents, 20+ years building software, previously Zendesk. The public site's founder CTA points there with campaign attribution.
+Founder positioning follows ndungu.dev (repositioned 2026-09-05): agentic development consulting for engineering teams using Claude Code and other coding agents, 20+ years building software, previously Zendesk. The public site's founder CTA points there with campaign attribution. The founder section also names the broader practice (dec-0953, 2026-09-07: OSS launch synergy) and links to Ajent (ajent.social) as a sibling project in the same agentic-infrastructure work — narrative and a cross-link only, no shared CTA or funnel.
 
 ## Validation
 
