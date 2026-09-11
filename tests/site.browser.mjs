@@ -2,7 +2,7 @@ import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
 const base=process.env.SITE_BASE||'http://127.0.0.1:4879';
-const project={version:1,task:'numeric_classification',objective:'Classify flowers',target:'species',features:['sepal_length','sepal_width','petal_length','petal_width'],hardware:'laptop',recipe:'dense-relu-16-v1',status:'ready_for_local_validation',evidence:[],research_status:'No reviewed research attached; standard verified classifier recipe only.',training:{epochs:20,batch_size:15,learning_rate:0.01,seed:42},runtime:'cpu/float32',related_research:[]};
+const project={version:1,task:'numeric_classification',objective:'Classify flowers',target:'species',features:['sepal_length','sepal_width','petal_length','petal_width'],hardware:'laptop',recipe:'dense-relu-16-v1',status:'ready_for_local_validation',evidence:[],research_status:'No reviewed research attached; standard verified classifier recipe only.',quality:{metric:'macro_f1',minimum:0.8,holdout_fraction:0.2},resource_limits:{max_training_seconds:150,max_epochs:20,max_batch_size:15},training:{epochs:20,batch_size:15,learning_rate:0.01,seed:42},runtime:'cpu/float32',related_research:[]};
 const browser=await chromium.launch({headless:true});await mkdir('renders',{recursive:true});
 for(const width of [320,390,1024,1440]){
  const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce',permissions:['clipboard-read','clipboard-write']});const page=await context.newPage();

@@ -48,8 +48,10 @@ else:
  call('run_cancel',{'id':run['id']});raise SystemExit('Training deadline exceeded; cancellation requested')
 save('run.json',run)
 if run['status']!='succeeded': raise SystemExit('Training failed: '+json.dumps(run))
-save('validation.json',run['validation'])
-print(json.dumps(run['validation'],indent=2))
+validation=run['validation']
+save('validation.json',validation)
+if validation.get('macro_f1',0)<project['quality']['minimum']: raise SystemExit('Quality target not met: '+json.dumps(validation))
+print(json.dumps(validation,indent=2))
 `;
 const PREDICT=`import argparse,json,pathlib,subprocess
 p=argparse.ArgumentParser();p.add_argument('--binary',required=True);p.add_argument('--rows',required=True);a=p.parse_args()
