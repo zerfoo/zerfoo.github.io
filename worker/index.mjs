@@ -41,16 +41,19 @@ const MAX_CONTEXT_BYTES=16000;
 export class DesignBudget {
   constructor(ctx,env) {this.ctx=ctx;this.env=env;}
   async fetch(request) {
-    const {identity}=await request.json();
-    if(typeof identity!=='string'||identity.length!==64) return reply({error:'Invalid identity'},400);
+    const body=await request.json();
+    const identities=Array.isArray(body.identities)?body.identities:[{id:body.identity,limit:12}];
+    if(!identities.length||identities.length>2||!identities.every(x=>x&&typeof x.id==='string'&&/^[0-9a-f]{64}$/.test(x.id)&&Number.isSafeInteger(x.limit)&&x.limit>0&&x.limit<=12)) return reply({error:'Invalid identity'},400);
     const cap=Number(this.env.LIFETIME_BUDGET_CENTS);
     if(!Number.isSafeInteger(cap)||cap<1||cap>2000) return reply({error:'Hosted chat unavailable. Continue with your coding agent.'},503);
     const now=Date.now();
     const ok=await this.ctx.storage.transaction(async tx=>{
       const used=await tx.get('reserved')||0;
-      const visitor=await tx.get(identity)||{count:0,last:0};
-      if(used+1>cap||visitor.count>=12||now-visitor.last<5000) return false;
-      await tx.put('reserved',used+1);await tx.put(identity,{count:visitor.count+1,last:now});return true;
+      const visitors=await Promise.all(identities.map(x=>tx.get(x.id).then(v=>v||{count:0,last:0})));
+      if(used+1>cap||visitors.some((v,i)=>v.count>=identities[i].limit||now-v.last<5000)) return false;
+      await tx.put('reserved',used+1);
+      await Promise.all(identities.map((x,i)=>tx.put(x.id,{count:visitors[i].count+1,last:now})));
+      return true;
     });
     return ok?reply({reserved_cents:1}):reply({error:'Hosted chat limit reached. Download your project or continue with your coding agent.'},429);
   }
@@ -58,10 +61,13 @@ export class DesignBudget {
 export default {
   async fetch(request,env) {
     const origin=request.headers.get('Origin');
-    const headers={'Access-Control-Allow-Origin':env.SITE_ORIGIN,'Vary':'Origin'};
+    const headers={'Access-Control-Allow-Origin':env.SITE_ORIGIN,'Access-Control-Allow-Credentials':'true','Vary':'Origin'};
     if(origin!==env.SITE_ORIGIN) return reply({error:'Origin not allowed'},403);
     if(request.method==='OPTIONS') return new Response(null,{status:204,headers:{...headers,'Access-Control-Allow-Methods':'POST','Access-Control-Allow-Headers':'Content-Type'}});
-    const respond=(body,status=200)=>{const r=reply(body,status);for(const [k,v] of Object.entries(headers))r.headers.set(k,v);return r;};
+    const existingSession=request.headers.get('Cookie')?.match(/(?:^|;\s*)zdesign_session=([A-Za-z0-9_-]{22,64})(?:;|$)/)?.[1];
+    const sessionToken=existingSession||(()=>{const bytes=new Uint8Array(24);crypto.getRandomValues(bytes);return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');})();
+    const sessionCookie=existingSession?null:`zdesign_session=${sessionToken}; Path=/; Max-Age=86400; Secure; HttpOnly; SameSite=Lax`;
+    const respond=(body,status=200)=>{const r=reply(body,status);for(const [k,v] of Object.entries(headers))r.headers.set(k,v);if(sessionCookie)r.headers.set('Set-Cookie',sessionCookie);return r;};
     if(request.method!=='POST'||new URL(request.url).pathname!=='/api/design') return respond({error:'Not found'},404);
     if(env.CHAT_ENABLED!=='true'||!env.OPENROUTER_API_KEY||!env.BUDGET||!env.IP_SALT) return respond({error:'Hosted chat is not enabled. Start with your coding agent using the instructions below.'},503);
     try {
@@ -75,8 +81,10 @@ export default {
       const ip=request.headers.get('CF-Connecting-IP'); if(!ip) return respond({error:'Client identity unavailable'},503);
       const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(env.IP_SALT+ip));
       const identity=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
+      const sessionHash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(env.IP_SALT+'session:'+sessionToken));
+      const sessionIdentity=Array.from(new Uint8Array(sessionHash),b=>b.toString(16).padStart(2,'0')).join('');
       const budget=env.BUDGET.get(env.BUDGET.idFromName('lifetime-v1'));
-      const reservation=await budget.fetch('https://budget/reserve',{method:'POST',body:JSON.stringify({identity})});
+      const reservation=await budget.fetch('https://budget/reserve',{method:'POST',body:JSON.stringify({identities:[{id:identity,limit:12},{id:sessionIdentity,limit:8}]})});
       if(!reservation.ok) return respond(await reservation.json(),reservation.status);
       // Reserve one cent even on failure. At max_price and these byte/token bounds,
       // each call costs less than the reservation; do not silently switch pricing.

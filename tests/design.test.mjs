@@ -42,3 +42,12 @@ test('durable budget refuses overspend and repeated rapid requests',async()=>{
  const results=await Promise.all([budget.fetch(req('a')),budget.fetch(req('b'))]);
  assert.deepEqual(results.map(x=>x.status).sort(),[200,429]);assert.equal(records.get('reserved'),1);
 });
+test('durable budget enforces a separate session allowance',async()=>{
+ const records=new Map();
+ const store={get:async k=>records.get(k),put:async(k,v)=>records.set(k,v)};
+ const ctx={storage:{transaction:f=>f(store)}};
+ const budget=new DesignBudget(ctx,{LIFETIME_BUDGET_CENTS:'20'});
+ const identities=[{id:'a'.repeat(64),limit:12},{id:'b'.repeat(64),limit:8}];
+ for(let n=0;n<8;n++) { const result=await budget.fetch(new Request('https://budget',{method:'POST',body:JSON.stringify({identities})})); assert.equal(result.status,200); for(const item of identities) records.get(item.id).last=0; }
+ assert.equal((await budget.fetch(new Request('https://budget',{method:'POST',body:JSON.stringify({identities})}))).status,429);
+});
