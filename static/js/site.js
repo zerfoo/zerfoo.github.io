@@ -1,30 +1,16 @@
-(() => {
-  const menu = document.querySelector('#nav-menu');
-  const toggle = document.querySelector('.menu-toggle');
-  const desktop = matchMedia('(min-width: 769px)');
-  let previousOverflow = '';
-  function setMenu(open, restoreFocus = false) {
-    const wasOpen = toggle.getAttribute('aria-expanded') === 'true';
-    toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-    menu.classList.toggle('active', open);
-    if (open && !wasOpen) { previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; }
-    if (!open && wasOpen) document.body.style.overflow = previousOverflow;
-    if (!open && restoreFocus) toggle.focus();
-  }
-  toggle.addEventListener('click', () => setMenu(toggle.getAttribute('aria-expanded') !== 'true'));
-  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
-  desktop.addEventListener('change', () => { if (desktop.matches) setMenu(false); });
-  document.addEventListener('keydown', e => {
-    if (toggle.getAttribute('aria-expanded') !== 'true') return;
-    if (e.key === 'Escape') setMenu(false, true);
-    if (e.key === 'Tab') {
-      const links = [toggle, ...menu.querySelectorAll('a')];
-      const current = links.indexOf(document.activeElement);
-      if (e.shiftKey && current <= 0) { e.preventDefault(); links.at(-1).focus(); }
-      else if (!e.shiftKey && (current === links.length - 1 || current === -1)) { e.preventDefault(); toggle.focus(); }
-    }
-  });
+(()=>{
+ const root=document.documentElement,theme=document.querySelector('.theme-toggle');
+ const system=matchMedia('(prefers-color-scheme: light)');
+ const update=()=>{theme.setAttribute('aria-label',`Switch to ${root.dataset.theme==='dark'?'light':'dark'} mode`);document.querySelector('meta[name="theme-color"]').content=root.dataset.theme==='dark'?'#0c0c0c':'#fafaf8';};
+ theme.onclick=()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('zerfoo-theme',root.dataset.theme);}catch{}update();};update();
+ system.addEventListener('change',()=>{let saved;try{saved=localStorage.getItem('zerfoo-theme');}catch{}if(!saved){root.dataset.theme=system.matches?'light':'dark';update();}});
+ const menu=document.querySelector('#nav-menu'),toggle=document.querySelector('.menu-toggle');
+ // Nonmodal dialog keeps the header's close button available; background is inert.
+ const background=[document.querySelector('main'),document.querySelector('footer')];
+ function setMenu(open,focus=false){toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Close menu':'Open menu');document.body.classList.toggle('menu-open',open);background.forEach(el=>el.inert=open);if(open){menu.show();menu.querySelector('a').focus();}else{menu.close();if(focus)toggle.focus();}}
+ toggle.onclick=()=>setMenu(!menu.open,true);menu.querySelectorAll('a').forEach(a=>a.onclick=()=>setMenu(false));
+ document.addEventListener('keydown',e=>{if(!menu.open)return;if(e.key==='Escape'){e.preventDefault();setMenu(false,true);}if(e.key==='Tab'){const items=[theme,toggle,...menu.querySelectorAll('a')],i=items.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();items.at(-1).focus();}else if(!e.shiftKey&&i===items.length-1){e.preventDefault();items[0].focus();}}});
+ matchMedia('(min-width:1025px)').addEventListener('change',e=>{if(e.matches&&menu.open)setMenu(false);});
   let toastTimer;
   async function copy(text) {
     const toast = document.querySelector('.toast');
@@ -47,47 +33,11 @@
     });
   });
   document.querySelector('.code-copy').addEventListener('click', () => copy(document.querySelector('[role=tabpanel]:not([hidden]) code').textContent));
-  const pipeline = document.querySelector('.pipeline');
-  const nodes = ['node-model', 'node-runtime', 'node-app'].map(id => document.getElementById(id));
-  const paths = [...document.querySelectorAll('.beam')];
-  const gradient = document.getElementById('beam-gradient');
-  const splash = document.querySelector('.splash');
-  const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  let points = [], frame = 0, state = 'p1', stateStart = 0, visible = true;
-  function measure() {
-    const box = pipeline.getBoundingClientRect();
-    points = nodes.map(n => { const r = n.getBoundingClientRect(); return {x:r.left+r.width/2-box.left,y:r.top+r.height/2-box.top}; });
-    const d = points.map((p,i) => `${i ? 'L' : 'M'} ${p.x},${p.y}`).join(' ');
-    paths.forEach(p => p.setAttribute('d',d));
-  }
-  function clean() { nodes.forEach(n => n.classList.remove('active')); splash.classList.remove('animate'); paths.forEach(p => p.style.opacity = '0'); }
-  function tick(now) {
-    if (!stateStart) stateStart = now;
-    const elapsed = now - stateStart, progress = Math.min(elapsed / 800, 1);
-    let percentage = state === 'p1' ? progress / 2 : .5 + progress / 2;
-    if (state === 'p1' || state === 'p2') {
-      const x = points[0].x + percentage * (points[2].x-points[0].x);
-      gradient.setAttribute('x1',String(x-24)); gradient.setAttribute('x2',String(x+24));
-      gradient.setAttribute('y1','0'); gradient.setAttribute('y2','0');
-      paths.forEach((p,i) => p.style.opacity = i ? '1' : '.6');
-      nodes[0].classList.toggle('active',state === 'p1' && progress < .4);
-      nodes[2].classList.toggle('active',state === 'p2' && progress > .6);
-      if (elapsed >= 800) {
-        clean(); stateStart = now;
-        if (state === 'p1') { state = 'splash'; splash.classList.add('animate'); }
-        else state = 'idle';
-      }
-    } else if (state === 'splash' && elapsed >= 800) { clean(); state = 'p2'; stateStart = now; }
-    else if (state === 'idle' && elapsed >= 1000) { state = 'p1'; stateStart = now; }
-    frame = requestAnimationFrame(tick);
-  }
-  function sync() { cancelAnimationFrame(frame); clean(); state = 'p1'; stateStart = 0; if (!motion.matches && !document.hidden && visible) { measure(); frame = requestAnimationFrame(tick); } }
-  const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); });
-  observer.observe(pipeline);
-  window.addEventListener('resize', measure);
-  motion.addEventListener('change', sync);
-  document.addEventListener('visibilitychange', sync);
-  window.addEventListener('pagehide', () => { cancelAnimationFrame(frame); });
-  window.addEventListener('pageshow', sync);
-  measure(); sync();
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ async function entrance(){if(reduced.matches){root.classList.remove('entrance');return;}await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,400))]);const anims=[],ease='cubic-bezier(.16,1,.3,1)',d=innerWidth<=680?.7:1;function lift(el,delay,duration=650,y=14){if(el)anims.push(el.animate([{opacity:0,transform:`translateY(${y*d}px)`},{opacity:1,transform:'translateY(0)'}],{duration,delay,easing:ease,fill:'both'}));}
+ lift(document.querySelector('.wordmark'),0,600,0);document.querySelectorAll('.nav-links a').forEach((el,i)=>lift(el,100+i*50,500,10));lift(document.querySelector('.nav-actions'),260,500,10);
+ document.querySelectorAll('.hl-line').forEach((el,i)=>anims.push(el.animate([{opacity:0,transform:'translateY(108%)'},{opacity:1,offset:.14},{opacity:1,transform:'translateY(0)'}],{duration:950,delay:200+i*90,easing:ease,fill:'both'})));
+ lift(document.querySelector('.hero-description'),520);lift(document.querySelector('.composer-shell'),640,950,22);lift(document.querySelector('.examples'),1080,650,12);
+ await Promise.allSettled(anims.map(a=>a.finished));root.classList.remove('entrance');anims.forEach(a=>a.cancel());root.classList.add('hero-ready');}
+ entrance();
 })();
