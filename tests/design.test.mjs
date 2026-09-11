@@ -14,7 +14,7 @@ test('rejects target leakage and unsupported tasks',()=>{
 });
 test('provider cannot inject executable recipe or research claims',()=>{
  const p=validateProposal({...input,project:{...input.project,recipe:'shell',evidence:['fake']}}).project;
- assert.equal(p.recipe,'dense-relu-16-v1');assert.deepEqual(p.evidence,[]);assert.deepEqual(p.quality,{metric:'macro_f1',minimum:0.8,holdout_fraction:0.2});assert.equal(p.resource_limits.max_training_seconds,150);
+ assert.equal(p.recipe,'dense-relu-16-v1');assert.deepEqual(p.evidence,[]);assert.deepEqual(p.quality,{metric:'macro_f1',minimum:0.8,holdout_fraction:0.2});assert.equal(p.resource_limits.max_training_seconds,150);assert.match(p.split_policy,/grouped and time-ordered/);
  const f=filesFor(p);assert.ok(f['train.py'].includes("call('model" )===false);assert.ok(f['predict.py'].includes('model_predict'));
  assert.ok(!f['AGENTS.md'].includes('Classify flowers'));assert.ok(zip(f).size>2000);
 });
