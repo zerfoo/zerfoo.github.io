@@ -1,13 +1,13 @@
 # Zerfoo
 
-> AI inference. Native to Go.
+> Create, train and run AI on hardware you control.
 
-Zerfoo is an open-source Go ML framework for embedded inference, generation, and serving. GGUF is its model format. Default and release builds are CGo-free; optional GPU build tags have additional requirements. CUDA has published hardware evidence; other backends should not be assumed hardware-verified.
+Zerfoo is an open-source Go ML framework for model creation, training, evaluation, inference, generation, and serving. GGUF is its model format. Default and release builds are CGo-free; optional GPU build tags have additional requirements. CUDA has published hardware evidence; other backends should not be assumed hardware-verified.
 
 ## Start here
 
-- [Quickstart](https://zerfoo.feza.ai/docs/getting-started/quickstart/)
-- [Documentation](https://zerfoo.feza.ai/docs/)
+- [Quickstart](https://zer.foo/docs/getting-started/quickstart/)
+- [Documentation](https://zer.foo/docs/)
 - [Source](https://github.com/zerfoo/zerfoo)
 - [Go API](https://pkg.go.dev/github.com/zerfoo/zerfoo)
 - [Model evidence](https://github.com/zerfoo/zerfoo/blob/main/docs/verified-models.md)
@@ -18,7 +18,7 @@ Zerfoo is an open-source Go ML framework for embedded inference, generation, and
 
 Model architecture registration is not verification. The March 27, 2026 GB10 benchmark records 235 tok/s for Gemma 3 1B versus Ollama 188, with near parity at 3B–7B. It is a single-machine, non-quality-normalized comparison: Zerfoo re-quantizes Q4_K to Q4_0 and timers differ. Read the source methodology before quoting performance.
 
-Zerfoo is a product of Feza, Inc., built by David Ndungu. David builds custom AI automations at https://ndungu.dev/.
+Zerfoo is a project of Sire Run, Inc. — https://sire.run/.
 
 
 # Documentation corpus
@@ -28,7 +28,7 @@ Guides and historical engineering articles follow. For current support and perfo
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/
+Source: https://zer.foo/docs/
 
 # Build AI into your Go application
 
@@ -65,7 +65,7 @@ The framework also contains training, tabular ML, and time-series packages. Matu
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/api/
+Source: https://zer.foo/docs/api/
 
 # API Reference
 
@@ -77,7 +77,7 @@ Detailed documentation for the public Go APIs.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/api/generate/
+Source: https://zer.foo/docs/api/generate/
 
 # Package generate
 
@@ -1081,7 +1081,7 @@ Deprecated: Use `GetCache` for CacheProvider-based caching.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/api/inference/
+Source: https://zer.foo/docs/api/inference/
 
 # Package inference
 
@@ -2029,7 +2029,7 @@ Implemented by engines that support setting compute precision.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/api/serve/
+Source: https://zer.foo/docs/api/serve/
 
 # Package serve
 
@@ -2669,7 +2669,7 @@ Reports token counts in completion responses.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/architecture/
+Source: https://zer.foo/docs/architecture/
 
 # Architecture
 
@@ -2680,7 +2680,7 @@ How Zerfoo works under the hood.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/architecture/gpu-setup/
+Source: https://zer.foo/docs/architecture/gpu-setup/
 
 # GPU Setup Guide
 
@@ -3086,7 +3086,7 @@ sudo apt install ocl-icd-opencl-dev libclblast-dev
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/architecture/overview/
+Source: https://zer.foo/docs/architecture/overview/
 
 # Architecture Overview
 
@@ -3575,7 +3575,7 @@ zerfoo/
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/01-introducing-zerfoo/
+Source: https://zer.foo/docs/blog/01-introducing-zerfoo/
 
 # Introducing Zerfoo: A Production-Grade ML Inference Framework for Go
 
@@ -3726,7 +3726,7 @@ Welcome to ML inference in Go.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/02-benchmark-comparison/
+Source: https://zer.foo/docs/blog/02-benchmark-comparison/
 
 # Zerfoo vs Ollama vs llama.cpp: A Performance Comparison
 
@@ -3867,7 +3867,7 @@ go get github.com/zerfoo/zerfoo@latest
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/03-architecture-deep-dive/
+Source: https://zer.foo/docs/blog/03-architecture-deep-dive/
 
 # Inside Zerfoo: An Architecture Deep Dive
 
@@ -4063,7 +4063,7 @@ For a complete package-by-package map of the codebase, see our [architecture tou
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/04-why-go-for-ml/
+Source: https://zer.foo/docs/blog/04-why-go-for-ml/
 
 # Why Go for ML? Making the Case for Go in Machine Learning
 
@@ -4230,7 +4230,7 @@ The question isn't whether Go can do ML. The question is why your production inf
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/05-migrating-from-ollama/
+Source: https://zer.foo/docs/blog/05-migrating-from-ollama/
 
 # Migrating from Ollama to Zerfoo
 
@@ -4544,7 +4544,7 @@ zerfoo serve gemma-3-1b-q4 --port 8080
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/
+Source: https://zer.foo/docs/blog/
 
 # Blog
 
@@ -4552,7 +4552,7 @@ Development updates and technical deep dives.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/gguf-industry-standard-format/
+Source: https://zer.foo/docs/blog/gguf-industry-standard-format/
 
 # GGUF: Why We Standardized on the Industry Format
 
@@ -4653,7 +4653,7 @@ We tried building a custom format. It was slower, harder to maintain, and nobody
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/how-we-beat-ollama-cuda-graph-capture/
+Source: https://zer.foo/docs/blog/how-we-beat-ollama-cuda-graph-capture/
 
 # How We Beat Ollama by 18.8%: CUDA Graph Capture in Pure Go
 
@@ -4777,7 +4777,7 @@ The benchmark is reproducible. The methodology is documented. The code is open. 
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/ml-inference-go-service-10-lines/
+Source: https://zer.foo/docs/blog/ml-inference-go-service-10-lines/
 
 # Add ML Inference to Your Go Service in 10 Lines
 
@@ -4984,7 +4984,7 @@ For a full walkthrough covering CLI usage, the library API, and the OpenAI-compa
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/blog/zero-cgo-pure-go-ml-inference/
+Source: https://zer.foo/docs/blog/zero-cgo-pure-go-ml-inference/
 
 # Zero CGo: Why We Chose Pure Go for ML Inference
 
@@ -5233,7 +5233,7 @@ That is the entire build change. The rest is just Go code.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/contributing/
+Source: https://zer.foo/docs/contributing/
 
 # Contributing
 
@@ -5243,7 +5243,7 @@ How to contribute to the Zerfoo ecosystem.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/contributing/overview/
+Source: https://zer.foo/docs/contributing/overview/
 
 # Contributing to Zerfoo
 
@@ -5486,7 +5486,7 @@ Prefer fused operations (`FusedAddRMSNorm`, `FusedSiluGate`, etc.) over sequence
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/
+Source: https://zer.foo/docs/cookbooks/
 
 # Cookbooks
 
@@ -5507,7 +5507,7 @@ Ready-to-use code recipes. Each cookbook is a self-contained example you can cop
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/basic-text-generation/
+Source: https://zer.foo/docs/cookbooks/basic-text-generation/
 
 # Basic Text Generation
 
@@ -5592,7 +5592,7 @@ func main() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/batch-inference/
+Source: https://zer.foo/docs/cookbooks/batch-inference/
 
 # Batch Inference
 
@@ -5719,7 +5719,7 @@ func main() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/custom-sampling/
+Source: https://zer.foo/docs/cookbooks/custom-sampling/
 
 # Custom Sampling Parameters
 
@@ -5834,7 +5834,7 @@ The recipe runs three generation passes with the same prompt but different sampl
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/embedding-similarity/
+Source: https://zer.foo/docs/cookbooks/embedding-similarity/
 
 # Embedding and Cosine Similarity
 
@@ -5953,7 +5953,7 @@ This pattern is the foundation for retrieval-augmented generation (RAG): embed y
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/lora-fine-tuning/
+Source: https://zer.foo/docs/cookbooks/lora-fine-tuning/
 
 # LoRA Fine-Tuning
 
@@ -6165,7 +6165,7 @@ func main() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/openai-server/
+Source: https://zer.foo/docs/cookbooks/openai-server/
 
 # OpenAI-Compatible Server
 
@@ -6292,7 +6292,7 @@ func main() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/rag/
+Source: https://zer.foo/docs/cookbooks/rag/
 
 # Retrieval-Augmented Generation (RAG)
 
@@ -6446,7 +6446,7 @@ func main() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/speculative-decoding/
+Source: https://zer.foo/docs/cookbooks/speculative-decoding/
 
 # Speculative Decoding
 
@@ -6583,7 +6583,7 @@ func main() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/streaming-chat/
+Source: https://zer.foo/docs/cookbooks/streaming-chat/
 
 # Streaming Chat
 
@@ -6685,7 +6685,7 @@ func main() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/structured-json-output/
+Source: https://zer.foo/docs/cookbooks/structured-json-output/
 
 # Structured JSON Output
 
@@ -6839,7 +6839,7 @@ For custom pipelines, the `grammar` package exposes the conversion step directly
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/tool-calling/
+Source: https://zer.foo/docs/cookbooks/tool-calling/
 
 # Tool / Function Calling
 
@@ -7022,7 +7022,7 @@ func dispatch(name string, args json.RawMessage) string {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/cookbooks/vision-multimodal/
+Source: https://zer.foo/docs/cookbooks/vision-multimodal/
 
 # Vision / Multimodal Inference
 
@@ -7145,7 +7145,7 @@ func main() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/deployment/
+Source: https://zer.foo/docs/deployment/
 
 # Deployment
 
@@ -7156,7 +7156,7 @@ Guides for running Zerfoo in production environments.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/deployment/enterprise/
+Source: https://zer.foo/docs/deployment/enterprise/
 
 # Enterprise Deployment Guide
 
@@ -8874,7 +8874,7 @@ kubectl get hpa -n zerfoo
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/deployment/production/
+Source: https://zer.foo/docs/deployment/production/
 
 # Production Deployment Guide
 
@@ -9105,7 +9105,7 @@ and advanced security hardening, see the
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/ecosystem/
+Source: https://zer.foo/docs/ecosystem/
 
 # Ecosystem
 
@@ -9157,7 +9157,7 @@ ONNX-to-GGUF converter CLI. Standalone binary with no runtime dependencies on th
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/ecosystem/numeric-types/
+Source: https://zer.foo/docs/ecosystem/numeric-types/
 
 # Numeric Types
 
@@ -9301,7 +9301,7 @@ The compute engine handles dequantization automatically when mixing precision le
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/ecosystem/ztensor/
+Source: https://zer.foo/docs/ecosystem/ztensor/
 
 # ztensor
 
@@ -9454,7 +9454,7 @@ ztensor depends on [float16]({{< relref "numeric-types" >}}) and [float8]({{< re
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/ecosystem/ztoken/
+Source: https://zer.foo/docs/ecosystem/ztoken/
 
 # ztoken
 
@@ -9573,7 +9573,7 @@ ztoken has zero external dependencies beyond the Go standard library and `golang
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/getting-started/
+Source: https://zer.foo/docs/getting-started/
 
 # Getting Started
 
@@ -9585,7 +9585,7 @@ Install Zerfoo, pull a model, and run your first inference in minutes.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/getting-started/first-inference/
+Source: https://zer.foo/docs/getting-started/first-inference/
 
 # Your First Inference
 
@@ -9854,7 +9854,7 @@ print(response.choices[0].message.content)
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/getting-started/installation/
+Source: https://zer.foo/docs/getting-started/installation/
 
 # Installation
 
@@ -9967,7 +9967,7 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/getting-started/quickstart/
+Source: https://zer.foo/docs/getting-started/quickstart/
 
 # Quick Start
 
@@ -10273,7 +10273,7 @@ fmt.Printf("Tokens: %d, Duration: %s\n", result.TokenCount, result.Duration)
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/reference/
+Source: https://zer.foo/docs/reference/
 
 # Reference
 
@@ -10287,7 +10287,7 @@ Benchmarks, API stability guarantees, and migration guides.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/reference/api-stability/
+Source: https://zer.foo/docs/reference/api-stability/
 
 # Engine[T] API Freeze for v1.0
 
@@ -10590,7 +10590,7 @@ delegation method if it needs to be visible through traced execution.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/reference/benchmarks/
+Source: https://zer.foo/docs/reference/benchmarks/
 
 # Performance, with the conditions attached
 
@@ -10635,7 +10635,7 @@ A registered architecture means the graph builder exists. It does not mean every
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/reference/extensions/
+Source: https://zer.foo/docs/reference/extensions/
 
 # Third-Party Extension Convention
 
@@ -10918,7 +10918,7 @@ for _, name := range tensor.ListQuantTypes() {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/reference/granite-guardian/
+Source: https://zer.foo/docs/reference/granite-guardian/
 
 # Granite Guardian
 
@@ -11294,7 +11294,7 @@ When Guardian is enabled, the server exports:
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/reference/granite-timeseries/
+Source: https://zer.foo/docs/reference/granite-timeseries/
 
 # Granite Time Series
 
@@ -11418,7 +11418,7 @@ channels. The inference runtime auto-configures based on these fields.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/reference/migration-v1/
+Source: https://zer.foo/docs/reference/migration-v1/
 
 # Migrating to Zerfoo v1.0
 
@@ -11699,7 +11699,7 @@ import (
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/tutorials/
+Source: https://zer.foo/docs/tutorials/
 
 # Tutorials
 
@@ -11712,7 +11712,7 @@ Step-by-step guides for common workflows.
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/tutorials/api-server/
+Source: https://zer.foo/docs/tutorials/api-server/
 
 # Running the OpenAI-Compatible API Server
 
@@ -11960,7 +11960,7 @@ This works because the server speaks the same JSON schema as the OpenAI API. Any
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/tutorials/model-loading/
+Source: https://zer.foo/docs/tutorials/model-loading/
 
 # Model Loading and Architecture Support
 
@@ -12128,7 +12128,7 @@ fmt.Printf("Parameters: %d\n", info.Parameters)
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/tutorials/tabular-timeseries/
+Source: https://zer.foo/docs/tutorials/tabular-timeseries/
 
 # Tabular and Time-Series ML
 
@@ -12370,7 +12370,7 @@ The `tabular` and `timeseries` packages bring modern neural architectures for st
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/tutorials/text-generation/
+Source: https://zer.foo/docs/tutorials/text-generation/
 
 # Text Generation Deep Dive
 
@@ -12566,7 +12566,7 @@ for i, r := range results {
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/zonnx/
+Source: https://zer.foo/docs/zonnx/
 
 # zonnx
 
@@ -12578,7 +12578,7 @@ ONNX and SafeTensors to GGUF converter. Standalone CLI binary with zero runtime 
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/zonnx/onnx-to-gguf/
+Source: https://zer.foo/docs/zonnx/onnx-to-gguf/
 
 # ONNX to GGUF Conversion
 
@@ -12709,7 +12709,7 @@ zerfoo serve ./models/gemma-2b.gguf
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/zonnx/overview/
+Source: https://zer.foo/docs/zonnx/overview/
 
 # zonnx Overview
 
@@ -12789,7 +12789,7 @@ zonnx inspect --pretty ./models/model.onnx
 
 
 ---
-Source: https://zerfoo.feza.ai/docs/zonnx/safetensors-to-gguf/
+Source: https://zer.foo/docs/zonnx/safetensors-to-gguf/
 
 # SafeTensors to GGUF Conversion
 
