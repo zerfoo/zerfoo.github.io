@@ -1,0 +1,8 @@
+{
+  "name": "zerfoo-legacy-redirect",
+  "main": "worker/legacy-redirect.mjs",
+  "compatibility_date": "2026-09-10",
+  "workers_dev": false,
+  "routes": [{"pattern": "zerfoo.feza.ai/*", "zone_name": "feza.ai"}],
+  "observability": {"enabled": true, "head_sampling_rate": 0.1}
+}
