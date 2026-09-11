@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import worker,{validateProposal,DesignBudget,boundedJSON,searchResearch} from '../worker/index.mjs';
+import worker,{validateProposal,DesignBudget,boundedJSON,searchResearch,reviewedResearch} from '../worker/index.mjs';
 import {filesFor,zip} from '../static/create/bundle.mjs';
 const input={message:'Ready for local validation',project:{task:'numeric_classification',objective:'Classify flowers',target:'species',features:['sepal_length','sepal_width','petal_length','petal_width'],hardware:'laptop'}};
 test('retrieves actual library notes without promoting them to evidence',()=>{
  const cards=searchResearch('AutoTrain');assert.ok(cards.some(c=>c.id==='2410.15735'));assert.ok(cards.every(c=>c.review_status==='unreviewed'));assert.deepEqual(searchResearch('zzzzzzzzzzzz'),[]);
+ assert.deepEqual(reviewedResearch,[]);
 });
 test('rejects target leakage and unsupported tasks',()=>{
  assert.throws(()=>validateProposal({...input,project:{...input.project,features:['species']}}));
@@ -20,7 +21,9 @@ test('provider cannot inject executable recipe or research claims',()=>{
 test('unsupported briefs do not become executable models',()=>{
  const p=validateProposal({...input,project:{...input.project,task:'design_brief'}}).project;
  assert.equal(p.recipe,null);assert.equal(p.status,'requires_engineering');
+ const recipe=JSON.parse(filesFor(p)['model.recipe.json']);assert.equal(recipe.runnable,false);assert.deepEqual(recipe.layers,[]);assert.equal(recipe.definition,null);
 });
+test('proposal strings reject control characters',()=>{assert.throws(()=>validateProposal({...input,message:'bad\u0000text'}));assert.throws(()=>validateProposal({...input,project:{...input.project,objective:'bad\u0001text'}}));});
 test('bounded parser rejects oversized streaming payload',async()=>{
  await assert.rejects(boundedJSON(new Request('https://test',{method:'POST',body:'x'.repeat(12001)})));
 });

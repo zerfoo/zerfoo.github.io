@@ -2,6 +2,7 @@
 
 The website designs projects; no training, dataset upload or generated-code
 execution occurs here. Training and predictions happen on visitor hardware.
+The project is operated by Sire Run, Inc. at https://sire.run/.
 
 ## Visual direction
 
@@ -14,11 +15,12 @@ network diagram is the focal element; no invented metrics or success claims.
 
 Run npm ci, npm test, npx wrangler deploy --dry-run, then deploy.
 Set OPENROUTER_API_KEY and a random IP_SALT with Wrangler secrets. Do not commit
-credentials. Bind design.zer.foo as the Worker custom domain. Hosted chat stays
-disabled until the owner chooses a budget. Set CHAT_ENABLED=true only afterward.
+credentials. Bind design.zer.foo as the Worker custom domain. The configured
+provider is OpenRouter z-ai/glm-5.3-flash. Hosted chat is enabled with a hard
+$20 lifetime design-LLM ceiling (2000 cents), then stops.
 The lifetime ledger reserves one cent before dispatch and never refunds provider
-failures. The default maximum is $5 total, not daily. Never reset the durable
-object name to bypass its budget. Increase a cap only within owner authorization.
+failures. The maximum is $20 total, not daily. Never reset the durable object
+name to bypass its budget. Increase a cap only within owner authorization.
 Provider max_price pins input/output upper rates; keep message/output bounds
 and per-call reservations consistent when changing models. Workers hosting and
 storage charges are separate from this LLM ceiling.
@@ -32,7 +34,18 @@ an explicit remaining milestone, requiring curated evidence and retrieval tests.
 
 ## Migration
 
-Check zer.foo DNS/TLS before changing canonical URLs or GitHub Pages custom
-domain. Preserve documentation paths. Redirect zerfoo.feza.ai/* to zer.foo/*
-permanently only after the new site responds successfully. Rollback restores
-the prior CNAME and DNS configuration. Do not delete unrelated records.
+The zone currently has proxied apex records, so the site Worker uses the
+`zer.foo/*` zone route and does not delete or replace those records. Preserve
+documentation paths. Redirect zerfoo.feza.ai/* to zer.foo/* permanently only
+after the legacy zone/Pages custom-domain owner is available; the legacy host
+currently still serves GitHub Pages. Rollback removes only the Worker route and
+restores the prior CNAME/DNS configuration. Do not delete unrelated records.
+
+## CI deployment
+
+Cloudflare deployment is currently an explicit owner-run step from this
+checkout: rebuild Hugo, run `npm test`, then deploy `wrangler.jsonc` and
+`wrangler.site.jsonc` separately. The existing GitHub Pages workflow remains
+the legacy publisher for `zerfoo.feza.ai` until its owner can install a
+permanent redirect to matching `zer.foo` paths. It must not be treated as the
+canonical deployment.
