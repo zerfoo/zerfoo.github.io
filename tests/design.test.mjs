@@ -5,7 +5,7 @@ import {filesFor,zip} from '../static/create/bundle.mjs';
 const input={message:'Ready for local validation',project:{task:'numeric_classification',objective:'Classify flowers',target:'species',features:['sepal_length','sepal_width','petal_length','petal_width'],hardware:'laptop'}};
 test('retrieves actual library notes without promoting them to evidence',()=>{
  const cards=searchResearch('AutoTrain');assert.ok(cards.some(c=>c.id==='2410.15735'));assert.ok(cards.every(c=>c.review_status==='unreviewed'));assert.deepEqual(searchResearch('zzzzzzzzzzzz'),[]);
- assert.deepEqual(reviewedResearch,[]);
+ assert.equal(reviewedResearch.length,1);assert.equal(reviewedResearch[0].id,'2410.15735');assert.equal(reviewedResearch[0].supports_runnable_recipe,false);
 });
 test('rejects target leakage and unsupported tasks',()=>{
  assert.throws(()=>validateProposal({...input,project:{...input.project,features:['species']}}));
