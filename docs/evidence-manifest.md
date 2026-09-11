@@ -5,6 +5,7 @@
 | Core revision in download | `bfbb707111127cedb017d741f8b9337da1ed8632` |
 | Exported lifecycle at handoff | Iris training 20 epochs / 120 steps; validation 93.3%; fresh prediction probability `.997919`; ZIP integrity passed |
 | Hosted budget | Durable Object lifetime ledger, 2000-cent cap, one-cent reservation |
+| Local Durable Object runtime | Passed with one-cent test ledger: concurrent requests returned one provider failure (`502`, reservation charged) and one budget rejection (`429`) |
 | Research | 897 candidate notes remain unreviewed; reviewed allowlist is empty |
 | Kazi handoff | Converged with installed Kazi and free OpenCode model; HTTP probe header bug reported as issue #1855 |
 | Live browser conversation | Passed against `https://zer.foo/create/`; deployed API returned a ready numeric-classification project and browser download `zerfoo-project.zip` passed ZIP integrity |
