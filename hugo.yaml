@@ -1,10 +1,10 @@
-baseURL: https://zerfoo.feza.ai/
+baseURL: https://zer.foo/
 languageCode: en-us
-title: Zerfoo — AI inference. Native to Go.
+title: Zerfoo — Build AI you own.
 theme: hugo-book
 
 params:
-  description: "Run language models inside your Go application. Open-source inference, GGUF loading, streaming, and serving. Apache 2.0."
+  description: "Create, train, evaluate and run AI on your own hardware. Open source. Apache 2.0."
   BookTheme: auto
   BookToC: true
   BookSection: docs
