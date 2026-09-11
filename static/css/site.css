@@ -826,3 +826,10 @@ transition:none!important}
 margin:0;
 font-size:13px}
 
+
+/* Keep the conversation above its reply composer in both visual and DOM order. */
+.composer .conversation{padding:0 0 22px;margin-bottom:22px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;max-height:420px;overflow:auto;overscroll-behavior:contain}
+.composer .conversation[hidden]{display:none}
+.design-results{width:clamp(560px,55vw,820px);grid-template-columns:1fr}
+@media(max-width:1024px){.design-results{width:clamp(320px,76vw,760px)}}
+@media(max-width:680px){.design-results{width:100%}.composer .conversation{max-height:340px}}
