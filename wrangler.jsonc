@@ -1,0 +1,12 @@
+{
+  "name": "zerfoo-design",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-09-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "vars": {"SITE_ORIGIN":"https://zer.foo","LIFETIME_BUDGET_CENTS":"2000","CHAT_ENABLED":"true"},
+  "routes":[{"pattern":"design.zer.foo","custom_domain":true}],
+  "durable_objects": {"bindings":[{"name":"BUDGET","class_name":"DesignBudget"}]},
+  "migrations":[{"tag":"v1","new_sqlite_classes":["DesignBudget"]}],
+  "observability":{"enabled":true,"head_sampling_rate":0.1}
+}

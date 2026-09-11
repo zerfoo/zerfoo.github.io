@@ -3,5 +3,7 @@ resources/_gen/
 .hugo_build.lock
 .claude/
 node_modules/
+.wrangler/
+.dev.vars
 renders/*.png
 renders/index.html

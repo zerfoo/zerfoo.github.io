@@ -1,0 +1,12 @@
+import {filesFor,zip} from './bundle.mjs';
+const $=id=>document.getElementById(id);let messages=[],project=null,busy=false;
+function append(role,content){const p=document.createElement('p');p.className=role;p.textContent=content;$('messages').append(p);p.scrollIntoView({block:'nearest'});}
+function preview(p){project=p;$('status').textContent=p.task==='numeric_classification'?'Ready for local validation':'Design brief';$('objective').textContent=p.objective;$('architecture').textContent=p.recipe?'Dense 16 → ReLU → class predictions':'Requires local engineering';$('compute').textContent=p.hardware+' · '+p.runtime;$('research').textContent=p.research_status;for(const card of p.related_research||[]){const a=document.createElement('a');a.href=card.url;a.textContent=card.title+' (unreviewed)';a.target='_blank';a.rel='noopener';$('research').append(document.createElement('br'),a);}$('download').disabled=false;}
+document.querySelectorAll('[data-example]').forEach(b=>b.onclick=()=>{$('message').value=b.dataset.example;$('message').focus();});
+$('chat').onsubmit=async event=>{event.preventDefault();if(busy)return;const content=$('message').value.trim();if(!content)return;busy=true;$('send').disabled=true;$('error').textContent='';append('user',content);messages.push({role:'user',content});$('message').value='';
+ try{const response=await fetch('https://design.zer.foo/api/design',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});const data=await response.json();if(!response.ok)throw Error(data.error||'Design service unavailable');append('assistant',data.message);messages.push({role:'assistant',content:data.message});if(data.project)preview(data.project);}
+ catch(error){messages.pop();$('message').value=content;$('error').textContent=error.message;}
+ finally{busy=false;$('send').disabled=false;}
+};
+$('download').onclick=()=>{if(!project)return;const url=URL.createObjectURL(zip(filesFor(project)));const a=document.createElement('a');a.href=url;a.download='zerfoo-project.zip';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('instruction').textContent='Open my downloaded Zerfoo project, follow AGENTS.md, and use Kazi to build, train, evaluate and run it on my hardware.';};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('instruction').textContent);$('copied').textContent='Copied';}catch{$('copied').textContent='Select and copy the instruction above.';}};
