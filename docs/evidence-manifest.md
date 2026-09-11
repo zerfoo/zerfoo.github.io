@@ -12,5 +12,6 @@
 | Browser and domain | Browser pass; apex custom-domain attachment blocked by existing proxied A records; switched to `zer.foo/*` zone route |
 | Live deployments | API version `1190abaf-e9f4-4734-b408-eab5af4e75c3`; site version `c84d1b8f-988d-44c3-bff5-2fec3bd87595`; required live paths return 200 |
 | Legacy hostname | `zerfoo.feza.ai` still serves GitHub Pages (200); permanent redirect requires legacy zone/Pages ownership and remains open |
+| Legacy browser fallback | Verified `https://zerfoo.feza.ai/create/` redirects in-browser to `https://zer.foo/create/`; HTTP 301 remains ownership-gated |
 
 This file contains no credentials, private paths or dataset rows.
