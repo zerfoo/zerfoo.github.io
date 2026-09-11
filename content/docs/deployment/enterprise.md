@@ -807,7 +807,7 @@ spec:
   renewBefore: 360h  # renew 15 days before expiry
   subject:
     organizations:
-      - Feza Inc
+      - Sire Run, Inc.
   dnsNames:
     - api.example.com
     - zerfoo-gemma-3-7b.zerfoo-system.svc.cluster.local

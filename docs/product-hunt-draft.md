@@ -2,10 +2,10 @@
 
 Name: Zerfoo
 
-Tagline: AI inference, native to Go
+Tagline: Build AI you own
 
 Description:
-Run language models inside your Go application. Zerfoo is an open-source ML framework with GGUF loading, streaming, structured output, and an OpenAI-compatible server. Start with a verified model, keep your Go workflow, and inspect the code behind it.
+Describe a model, export a portable project, then train and run it on hardware you control. Zerfoo is an open-source framework for creating, training, evaluating and running AI, with a growing set of verified workflows.
 
 Maker comment:
 Hi, I’m David, the builder of Zerfoo.
@@ -18,7 +18,7 @@ I’ve published benchmark evidence and a model matrix because architecture supp
 
 I’d especially love feedback from Go developers embedding inference in a real service. What would make this useful enough to adopt?
 
-Website: https://zerfoo.feza.ai/?utm_source=producthunt&utm_medium=launch&utm_campaign=zerfoo
+Website: https://zer.foo/?utm_source=producthunt&utm_medium=launch&utm_campaign=zerfoo
 Repository: https://github.com/zerfoo/zerfoo
 
 Gallery assets:

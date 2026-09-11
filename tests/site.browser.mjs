@@ -1,0 +1,17 @@
+import {chromium} from '@playwright/test';
+import assert from 'node:assert/strict';
+import {mkdir} from 'node:fs/promises';
+const base=process.env.SITE_BASE||'http://127.0.0.1:4879';
+const project={version:1,task:'numeric_classification',objective:'Classify flowers',target:'species',features:['sepal_length','sepal_width','petal_length','petal_width'],hardware:'laptop',recipe:'dense-relu-16-v1',status:'ready_for_local_validation',evidence:[],research_status:'No reviewed research attached; standard verified classifier recipe only.',training:{epochs:20,batch_size:15,learning_rate:0.01,seed:42},runtime:'cpu/float32',related_research:[]};
+const browser=await chromium.launch({headless:true});await mkdir('renders',{recursive:true});
+for(const width of [320,390,1024,1440]){
+ const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce',permissions:['clipboard-read','clipboard-write']});const page=await context.newPage();
+ await page.goto(`${base}/`,{waitUntil:'load'});assert.equal(await page.locator('h1').count(),1);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:`renders/home-${width}.png`,fullPage:true});
+ await page.goto(`${base}/create/`,{waitUntil:'load'});assert.equal(await page.getByRole('heading',{name:'What will you build?'}).count(),1);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ await page.getByRole('button',{name:'Classify flowers'}).click();assert.match(await page.locator('#message').inputValue(),/Classify flowers/);await page.locator('#message').fill('Classify flowers using numeric columns.');
+ await page.route('https://design.zer.foo/api/design',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({message:'A bounded local classifier is ready.',project})}));
+ await page.getByRole('button',{name:'Design with me'}).click();await page.getByText('A bounded local classifier is ready.').waitFor();assert.equal(await page.locator('#download').isDisabled(),false);
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'Download project'}).click();const dl=await download;assert.equal(dl.suggestedFilename(),'zerfoo-project.zip');await dl.saveAs('renders/browser-project.zip');
+ await page.getByRole('button',{name:'Copy instruction'}).click();await page.waitForTimeout(100);assert.match(await page.locator('#copied').textContent(),/Copied|Select/);await page.goto(`${base}/start/`);assert.match(await page.locator('body').textContent(),/Bring your own compute/);await context.close();
+}
+const failure=await browser.newPage();await failure.goto(`${base}/create/`);await failure.route('https://design.zer.foo/api/design',route=>route.abort());await failure.locator('#message').fill('Design after a network failure.');await failure.getByRole('button',{name:'Design with me'}).click();await failure.locator('#error').waitFor();assert.equal(await failure.getByText('Already have a coding agent?').count(),1);await failure.close();await browser.close();console.log(JSON.stringify({widths:[320,390,1024,1440],chat:'mock-success',download:'browser-event',failure:'fallback-visible'}));

@@ -1,13 +1,13 @@
 # Zerfoo
 
-> AI inference. Native to Go.
+> Create, train and run AI on hardware you control.
 
-Zerfoo is an open-source Go ML framework for embedded inference, generation, and serving. GGUF is its model format. Default and release builds are CGo-free; optional GPU build tags have additional requirements. CUDA has published hardware evidence; other backends should not be assumed hardware-verified.
+Zerfoo is an open-source Go ML framework for model creation, training, evaluation, inference, generation, and serving. GGUF is its model format. Default and release builds are CGo-free; optional GPU build tags have additional requirements. CUDA has published hardware evidence; other backends should not be assumed hardware-verified.
 
 ## Start here
 
-- [Quickstart](https://zerfoo.feza.ai/docs/getting-started/quickstart/)
-- [Documentation](https://zerfoo.feza.ai/docs/)
+- [Quickstart](https://zer.foo/docs/getting-started/quickstart/)
+- [Documentation](https://zer.foo/docs/)
 - [Source](https://github.com/zerfoo/zerfoo)
 - [Go API](https://pkg.go.dev/github.com/zerfoo/zerfoo)
 - [Model evidence](https://github.com/zerfoo/zerfoo/blob/main/docs/verified-models.md)
@@ -18,4 +18,4 @@ Zerfoo is an open-source Go ML framework for embedded inference, generation, and
 
 Model architecture registration is not verification. The March 27, 2026 GB10 benchmark records 235 tok/s for Gemma 3 1B versus Ollama 188, with near parity at 3B–7B. It is a single-machine, non-quality-normalized comparison: Zerfoo re-quantizes Q4_K to Q4_0 and timers differ. Read the source methodology before quoting performance.
 
-Zerfoo is a product of Feza, Inc., built by David Ndungu. David builds custom AI automations at https://ndungu.dev/.
+Zerfoo is a project of Sire Run, Inc. — https://sire.run/.
