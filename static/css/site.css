@@ -859,3 +859,7 @@ font-size:13px}
 .agent-resources .section>p,.agent-resources .section>ol{max-width:80ch;line-height:1.8;margin-block:20px}
 .agent-resources .section>h2:not(:first-child),.agent-resources .section>h3{margin-top:40px}
 .agent-resources .section>pre{overflow:auto;background:var(--raised);padding:24px;border-radius:16px;margin-block:20px}
+
+/* Shared entry point to the designer across the product site. */
+.nav-actions .desktop-cta{background:var(--accent);color:var(--bg)}
+:root[data-theme=light] .nav-actions .desktop-cta{color:#fff}

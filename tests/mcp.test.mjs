@@ -33,6 +33,6 @@ test('MCP rejects foreign origins, oversized payloads, malformed JSON and unsupp
  const get=await worker.fetch(new Request('https://zer.foo/mcp',{headers:{Accept:'text/event-stream'}}),env);assert.equal(get.status,405);
 });
 test('website handoff text and reset use the canonical llms entry point',async()=>{
- const {readFile}=await import('node:fs/promises');for(const path of ['content/_index.html','content/how-it-works.html']){const html=await readFile(path,'utf8');assert.ok(html.includes(handoffInstruction));assert.doesNotMatch(html,/Read https:\/\/zer.foo\/start\//);}
+ const {readFile}=await import('node:fs/promises');for(const path of ['content/_index.html','content/create.html','content/how-it-works.html']){const html=await readFile(path,'utf8');assert.ok(html.includes(handoffInstruction));assert.doesNotMatch(html,/Read https:\/\/zer.foo\/start\//);}
  assert.match(handoffInstruction,/create, train, evaluate and run/);assert.match(handoffInstruction,/Kazi/);
 });

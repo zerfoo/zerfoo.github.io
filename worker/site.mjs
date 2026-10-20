@@ -11,13 +11,12 @@ function finish(response,request,{alternate}={}){
  headers.set('X-Content-Type-Options','nosniff');headers.set('Referrer-Policy','strict-origin-when-cross-origin');
  const vary=new Set((headers.get('Vary')||'').split(',').map(s=>s.trim()).filter(Boolean));if(![...vary].some(s=>s.toLowerCase()==='accept'))vary.add('Accept');headers.set('Vary',[...vary].join(', '));
  headers.append('Link','</llms.txt>; rel="describedby"'+(alternate?`, <${alternate}>; rel="alternate"; type="text/markdown"`:''));
- if(new URL(request.url).pathname.startsWith('/create/'))headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src https://design.zer.foo; img-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+ if(new URL(request.url).pathname.startsWith('/create/'))headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://design.zer.foo https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; img-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
  return new Response(request.method==='HEAD'?null:response.body,{status:response.status,headers});
 }
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname,md=prefersMarkdown(request.headers.get('Accept')||'');
  if(path==='/mcp'||path==='/mcp/')return finish(await handleMcp(request,env),request);
- if(['/create','/create/','/create/index.html'].includes(path))return finish(Response.redirect(new URL('/#message',url.origin),301),request);
  if(path==='/api'||path==='/api/'){
   if(!['GET','HEAD'].includes(request.method)){const error=apiError(405,'method_not_allowed','API discovery supports GET or HEAD.','Fetch /openapi.json to find supported operations.');error.headers.set('Allow','GET, HEAD');return finish(error,request);}
   return finish(Response.json({name:'Zerfoo ML framework',description:'Agent resources and the hosted model designer. Inference and training run on your own hardware.',openapi:'https://zer.foo/openapi.json',docs:'https://zer.foo/agents/',designer:'https://design.zer.foo/api/design',cli:'https://zer.foo/cli/',mcp:'https://zer.foo/mcp'},{headers:{'Cache-Control':'public, max-age=300'}}),request);
