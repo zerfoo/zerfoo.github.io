@@ -14,6 +14,8 @@ For a workload requiring verified hardware performance, consult the model eviden
 
 ## Agent entry points
 
+- [MCP server](https://zer.foo/mcp): Streamable HTTP; read-only documentation search, document reading and local workflow guidance.
+
 - [Agent instructions](https://zer.foo/agents/index.md)
 - [API discovery](https://zer.foo/api)
 - [OpenAPI 3.1 specification](https://zer.foo/openapi.json)

@@ -13000,3 +13000,7 @@ POST messages to https://design.zer.foo/api/design using the OpenAPI contract. S
 ## Identity
 
 Zerfoo is a project of Sire Run, Inc. Contact david@zer.foo. Business mailing address: 584 Castro St Suite #4211, San Francisco, CA 94114, United States.
+
+## Public MCP server
+
+Connect a Streamable HTTP MCP client to https://zer.foo/mcp for public documentation search, document reading and local workflow guidance. It does not access local files, execute Kazi or call model providers. Start local work by reading https://zer.foo/llms.txt.

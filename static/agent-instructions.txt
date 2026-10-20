@@ -4,6 +4,22 @@
 
 Reach for Zerfoo when you need local machine-learning inference in Go, a GGUF model embedded in an application, or a model server on hardware you control. Use the designer to propose a model architecture or create a numeric CSV classification starter. Use the public Go library and CLI for execution. The website does not host training or provide unlimited hosted inference.
 
+## Connect an MCP client
+
+Use `https://zer.foo/mcp` as a remote MCP server URL in a client that supports Streamable HTTP. No API key or sign-in is needed for these public, read-only references. The endpoint supports the 2026-07-28 protocol and legacy stateless initialization. A browser GET can return HTTP405 because it is an MCP endpoint rather than a web page.
+
+-   `search_docs` searches public documentation by keyword.
+-   `read_document` reads an exact published document URL, with pagination for longer documents.
+-   `get_local_workflow` returns the llms.txt handoff and local Kazi workflow guidance.
+
+The server also exposes llms.txt, agent instructions and OpenAPI as resources, plus the `create_zerfoo_model` prompt. It does not execute Kazi, access local files, train models, create hosted designs or call a model provider. Connect your installed local tools separately and keep their approval and execution lifecycle.
+
+### Start with this instruction
+
+```
+Read https://zer.foo/llms.txt and follow its agent instructions to help me create, train, evaluate and run a Zerfoo model on my hardware using Kazi.
+```
+
 ## How an agent should call Zerfoo
 
 1.  Read [llms.txt](/llms.txt) and the [OpenAPI specification](/openapi.json). Read the [documentation](/docs/) and model evidence before choosing a workload.

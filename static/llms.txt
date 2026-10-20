@@ -12,6 +12,8 @@ Use Zerfoo for local GGUF inference in Go, an OpenAI-compatible server on your h
 
 ## Developer resources
 
+- [MCP endpoint](https://zer.foo/mcp): Public read-only Streamable HTTP tools to search/read docs and get local workflow guidance; configure this URL in your MCP client. No hosted training or model calls.
+
 - [API specification](https://zer.foo/openapi.json): OpenAPI 3.1, unique operation IDs, typed input and output schemas, errors and limits.
 - [API discovery](https://zer.foo/api): JSON links to the supported API surface.
 - [Official CLI](https://zer.foo/cli/index.md): Homebrew and Go installation; scripting local inference and serving.
