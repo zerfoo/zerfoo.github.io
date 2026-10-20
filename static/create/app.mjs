@@ -1,6 +1,6 @@
 import {trackFunnel} from './analytics.mjs';
-import {adaptProject} from './model.mjs';
-import {createModelViewer} from './viewer.mjs';
+import {adaptProject} from './model.mjs?v=sequential-1';
+import {createModelViewer} from './viewer.mjs?v=sequential-1';
 const $=id=>document.getElementById(id);
 let messages=[],project=null,download=null,busy=false,chatStarted=false;
 const viewerRoot=document.querySelector?.('[data-model-viewer]');

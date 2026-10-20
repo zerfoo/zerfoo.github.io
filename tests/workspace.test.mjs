@@ -24,3 +24,9 @@ test('real chat handlers keep successful history and downloads across clarificat
   const count=requests.length;await submit('x'.repeat(1801));assert.equal(requests.length,count);assert.match(el('error').textContent,/size limit/);
  }finally{globalThis.document=oldDocument;globalThis.fetch=oldFetch;}
 });
+test('generic multilayer perceptron diagrams use explicit ordered layers and retain unknown dimensions',()=>{
+ const topology={type:'sequential',layers:[{kind:'Input',units:null},{kind:'Dense',units:32},{kind:'ReLU',units:32},{kind:'Dense',units:16},{kind:'Tanh',units:16},{kind:'Dense',units:null}]};
+ const p={...project,task:'component_design',recipe:null,topology};const m=adaptProject(p);
+ assert.equal(m.supported,true);assert.equal(m.starter,false);assert.deepEqual(m.layers.map(l=>l.count),[null,32,32,16,16,null]);assert.equal(m.layers[1].params,null);assert.equal(m.layers[3].params,528);assert.equal(m.layers[5].params,null);
+ assert.throws(()=>adaptProject({...p,topology:{...topology,layers:[{kind:'Input',units:4},{kind:'Dense',units:32},{kind:'ReLU',units:16}]}}));
+});
