@@ -186,14 +186,19 @@
 .design-workspace .composer-wrap{padding:18px 24px 20px;border-top:1px solid var(--line)}
 .design-workspace .suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .design-workspace .suggestions button{font-size:10px;padding:8px 10px;border-radius:30px;color:var(--muted)}
-.design-workspace .chat-composer{background:linear-gradient(180deg,#ffffff05,transparent),var(--surface);border:1px solid var(--line);border-bottom-color:var(--accent);border-radius:9999px;padding:24px 32px;box-shadow:0 2px 0 #78d0cd50}
-.design-workspace .chat-composer textarea{width:100%;resize:vertical;min-height:70px;max-height:200px;border:0;background:transparent;color:var(--text);font:13px/1.7 Inter,Arial,sans-serif}
-.design-workspace .chat-composer textarea::placeholder{color:var(--quiet)}
-.design-workspace .composer-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;color:var(--muted)}
+.design-workspace .chat-composer{background:var(--raised);border:0;border-radius:9999px;padding:12px 16px 12px 24px;box-shadow:none}
+.design-workspace #chat{flex-direction:row;align-items:center;gap:12px}
+.design-workspace .chat-composer input{flex:1;min-width:0;width:100%;height:40px;padding:0;border:0;background:transparent;color:var(--text);font:18px/1.5 Inter,Arial,sans-serif}
+.design-workspace .chat-composer input::placeholder{color:var(--muted);opacity:1}
+.design-workspace .chat-composer input:focus-visible{outline:none}
+.design-workspace .chat-composer:focus-within{outline:2px solid var(--accent);outline-offset:4px}
+.design-workspace .composer-label{display:block;width:fit-content;margin:12px 0 0 20px;font-size:11px;color:var(--muted)}
 .design-workspace .local-label{font-size:9px;color:var(--quiet)}
-.design-workspace .composer-bottom button{border:1px solid var(--accent);border-radius:50%;height:34px;width:34px;padding:0;font-size:22px}
 .design-workspace #send{display:grid;place-items:center;line-height:1;text-align:center}
 .design-workspace #send svg{display:block;width:20px;height:20px;margin:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.design-workspace #chat #send{width:40px;height:40px;border:0;background:transparent;color:var(--muted)}
+.design-workspace #chat #send:before{content:none}
+.design-workspace #chat #send:hover{background:var(--surface);color:var(--text)}
 .design-workspace .composer-note{font-size:9px;color:var(--quiet);text-align:center;line-height:1.5;margin-top:13px}
 .design-workspace .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 .design-workspace .model-panel{padding:25px 28px 0;overflow:auto;min-width:0;display:flex;flex-direction:column;background:radial-gradient(ellipse at 60% 30%,#d4d77b03,transparent 65%)}
