@@ -36,3 +36,7 @@ test('OpenAPI operations, typed contracts and homepage identity metadata are dis
 });
 import SwaggerParser from '@apidevtools/swagger-parser';
 test('published document validates as OpenAPI 3.1',async()=>{await SwaggerParser.validate('static/openapi.json');});
+test('conditional requests compare the Markdown validator, not the HTML validator',async()=>{
+ const conditional={ASSETS:{fetch:async req=>{const markdown=new URL(req.url).pathname==='/index.md',etag=markdown?'"markdown"':'"html"';return new Response(req.headers.get('If-None-Match')===etag?null:markdown?'# Selected Markdown':'<html>Browser page</html>',{status:req.headers.get('If-None-Match')===etag?304:200,headers:{ETag:etag,'Content-Type':markdown?'text/markdown':'text/html'}});}}};
+ for(const [etag,status] of [['"html"',200],['"markdown"',304]]){const response=await worker.fetch(new Request('https://zer.foo/',{headers:{Accept:'text/markdown','If-None-Match':etag}}),conditional);assert.equal(response.status,status);assert.equal(response.headers.get('ETag'),'"markdown"');assert.match(response.headers.get('Vary'),/Accept/);if(status===200)assert.match(await response.text(),/# Selected Markdown/);}
+});

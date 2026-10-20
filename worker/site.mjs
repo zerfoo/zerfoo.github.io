@@ -22,7 +22,9 @@ export default {async fetch(request,env){
  }
  if(path.startsWith('/api/'))return finish(apiError(404,'not_found','No API operation exists at this URL.','Use /openapi.json. The hosted designer is at https://design.zer.foo/api/design.'),request);
  if(!['GET','HEAD'].includes(request.method)){const error=apiError(405,'method_not_allowed','This resource supports GET or HEAD.','Use the method documented in /openapi.json.');error.headers.set('Allow','GET, HEAD');return finish(error,request);}
- const response=await env.ASSETS.fetch(request);
+ const lookupHeaders=new Headers(request.headers);
+ if(md){lookupHeaders.delete('If-None-Match');lookupHeaders.delete('If-Modified-Since');}
+ const response=await env.ASSETS.fetch(md?new Request(request,{headers:lookupHeaders}):request);
  if(response.status===404){
   if(md)return finish(new Response('# 404 — Page not found\n\nThe requested Zerfoo resource does not exist. Check the URL or explore [documentation](https://zer.foo/docs/), [llms.txt](https://zer.foo/llms.txt), or the [sitemap](https://zer.foo/sitemap.xml).\n',{status:404,headers:{'Content-Type':markdownType,'Cache-Control':'no-store'}}),request);
   if((request.headers.get('Accept')||'').includes('application/json'))return finish(apiError(404,'not_found','The requested Zerfoo resource does not exist.','Check the URL or use https://zer.foo/llms.txt.'),request);
@@ -32,7 +34,9 @@ export default {async fetch(request,env){
  }
  if(response.ok&&response.headers.get('Content-Type')?.includes('text/html')){
   const alternate=path.endsWith('.html')?path.replace(/[^/]+\.html$/,'index.md'):path.replace(/\/?$/,'/')+'index.md';
-  if(md){const target=new URL(alternate,url);const result=await env.ASSETS.fetch(new Request(target,{headers:{Accept:'text/markdown'}}));
+  if(md){const target=new URL(alternate,url);const selectedHeaders=new Headers({Accept:'text/markdown'});for(const key of ['If-None-Match','If-Modified-Since'])if(request.headers.has(key))selectedHeaders.set(key,request.headers.get(key));
+   const result=await env.ASSETS.fetch(new Request(target,{headers:selectedHeaders}));
+   if(result.status===304)return finish(result,request,{alternate});
    if(!result.ok)return finish(apiError(503,'markdown_unavailable','The Markdown representation is temporarily unavailable.','Retry with Accept: text/html or read /llms.txt.'),request);
    const headers=new Headers(result.headers);headers.set('Content-Type',markdownType);headers.delete('Content-Length');return finish(new Response(result.body,{status:200,headers}),request,{alternate});
   }
