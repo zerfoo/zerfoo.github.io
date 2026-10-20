@@ -305,3 +305,12 @@
 .design-workspace #download{width:auto;min-width:170px;flex:0 0 auto;padding:12px 20px}.design-workspace #send{background:none;color:var(--text);width:36px;height:36px;border:1px solid var(--accent);font-size:22px;padding:0}.design-workspace #chat{min-height:0}.design-workspace .conversation{border:0;padding:0;background:none;border-radius:0}.design-workspace .inspector{border-radius:0;border-top:0;border-right:0;border-bottom:0;box-shadow:none}.design-workspace #status{font-size:10px}.design-workspace .card-footer .metric{min-width:75px}.design-workspace .layer-glyph{color:var(--accent)}
 @media(max-width:760px){.design-workspace #download{width:100%}.design-workspace .inspector{border-top:1px solid var(--line)}}
 @media(max-width:760px){.design-workspace [data-empty=true] .inspector,.design-workspace [data-empty=true] .card-footer,.design-workspace [data-empty=true] .toolbar{display:none}.design-workspace [data-empty=true] #stage{height:220px;min-height:220px}.design-workspace [data-empty=true] #fallback{padding:22px}.design-workspace [data-empty=true] #fallback h3{font-size:21px}.design-workspace [data-empty=true] #fallback p{font-size:12px}.design-workspace [data-empty=true] .empty-symbol{font-size:30px;margin-bottom:12px}}
+
+/* Informational pages share navigation; the homepage is the design workspace. */
+.information-page main{padding-top:36px;min-height:70dvh}
+.information-page .section:first-child{padding-top:48px}
+.designer-home .design-workspace{height:calc(100dvh - 76px);min-height:0}
+.designer-home .model-card{min-height:0;flex:1 0 auto}
+.designer-home .design-context code{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:760px){.designer-home .design-workspace{height:auto}.designer-home .chat-panel{min-height:420px}}
+.information-title{padding-top:24px;font-size:clamp(32px,5vw,56px);letter-spacing:-2px}

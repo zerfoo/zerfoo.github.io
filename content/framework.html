@@ -1,0 +1,58 @@
+---
+type: page
+layout: information
+---
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Framework — Zerfoo</title><meta name="description" content="Describe your idea. Design, train and run AI on your own hardware with Zerfoo, the open-source Go framework for model creation."><meta name="theme-color" content="#0c0c0c"><link rel="canonical" href="https://zer.foo/framework/"><meta property="og:title" content="Framework — Zerfoo"><meta property="og:description" content="From an idea to a model you own. Create, train and run AI on your hardware."><meta property="og:url" content="https://zer.foo/framework/"><meta property="og:type" content="website"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"><script src="/js/theme.js"></script><link rel="stylesheet" href="/css/site.css"><link rel="stylesheet" href="/create/workspace.css"><script src="/js/site.js" defer></script><!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EDB1KGM9VZ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-EDB1KGM9VZ');
+</script>
+</head><body class="information-page"><script src="/legacy-redirect.js"></script><a class="skip" href="#main">Skip to content</a>
+<header class="nav-shell"><nav class="nav" aria-label="Main navigation"><a class="wordmark" href="/" aria-label="Zerfoo home"><svg viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" d="M4 18C12 7 24 5 36 5V11.7C22 10.7 12 14 4 22Z M4 28C12 26 17 18 29 17C32 16.8 34 16.8 36 17.8V20C25 20 20 25 15 30C11 33 8 33.8 4 34Z"/></svg>zerfoo</a><div class="nav-links"><a href="/framework/">Framework</a><a href="/performance/">Performance</a><a href="/how-it-works/">How it works</a><a href="/about/">About</a><a href="/faq/">FAQ</a><a href="/docs/">Documentation</a></div><div class="nav-actions"><button class="theme-toggle" aria-label="Switch to light mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><a class="button small desktop-cta" href="https://github.com/zerfoo/zerfoo">GitHub ↗</a><button class="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button></div></nav></header><dialog id="nav-menu" aria-label="Navigation"><div class="overlay-links"><a href="/framework/">Framework</a><a href="/performance/">Performance</a><a href="/docs/">Documentation</a><a href="/how-it-works/">How it works</a><a href="/about/">About</a><a href="/faq/">FAQ</a><a class="button" href="/#message">Start creating</a></div></dialog><main id="main"><h1 class="information-title container">Framework</h1><section class="section container" id="why-zerfoo">
+<div class="section-heading"><div><p class="eyebrow">The Zerfoo framework</p><h2>A framework for<br>the AI you want to build.</h2></div><p>Create, train, evaluate and serve models in Go. Use the framework directly or let your coding agent handle the setup.</p></div>
+<div class="feature-layout">
+<article class="feature primary-feature"><div class="feature-top"><span class="small-label">EMBEDDED BY DESIGN</span><span>↗</span></div><div class="architecture-visual" aria-hidden="true"><div class="app-boundary"><span>your-service</span><div><span class="mini-block">HTTP</span><i>→</i><span class="mini-block runtime"><svg viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" d="M4 18C12 7 24 5 36 5V11.7C22 10.7 12 14 4 22Z M4 28C12 26 17 18 29 17C32 16.8 34 16.8 36 17.8V20C25 20 20 25 15 30C11 33 8 33.8 4 34Z"/></svg>zerfoo</span><i>→</i><span class="mini-block">AI</span></div><span class="binary-label">one application · one process</span></div></div><h3>Inference is a function call.</h3><p>Load a GGUF model and generate a response in your own process. Keep the application logic, deployment, and model lifecycle in Go.</p><a class="text-link" href="/docs/getting-started/quickstart/">See your first inference <span>↗</span></a></article>
+<div class="feature-stack"><article class="feature"><span class="small-label">THE BUILD YOU KNOW</span><h3>Go build. And go.</h3><p>Default and release builds need no C compiler. CUDA loads at runtime on supported systems; optional GPU build tags have additional requirements.</p><a class="text-link" href="/docs/architecture/gpu-setup/">Explore the GPU setup <span>↗</span></a></article><article class="feature"><span class="small-label">YOUR CHOICE OF INTERFACE</span><h3>A library. A CLI. An API.</h3><p>Embed directly, work from the terminal, or serve an OpenAI-compatible endpoint for chat completions, streaming, and embeddings.</p><a class="text-link" href="/docs/tutorials/api-server/">Meet the serving API <span>↗</span></a></article></div>
+</div>
+<div class="capability-row"><a href="/docs/cookbooks/streaming-chat/"><span>01</span> Token streaming ↗</a><a href="/docs/cookbooks/structured-json-output/"><span>02</span> Structured JSON ↗</a><a href="/docs/cookbooks/tool-calling/"><span>03</span> Tool calling ↗</a><a href="/docs/cookbooks/embedding-similarity/"><span>04</span> Embeddings ↗</a></div>
+</section>
+<section class="section code-section" id="get-started"><div class="container code-layout"><div class="code-intro"><p class="eyebrow">Build directly in Go</p><h2>Feels like Go.<br>Because it is.</h2><p>Start with a local GGUF file or download a model from Hugging Face. Load it, ask a question, and build from there.</p><a class="button" href="/docs/getting-started/quickstart/">Follow the quickstart <span>↗</span></a><p class="prerequisite">Go 1.26+ · Model download and available memory depend on your chosen model.</p></div><div class="code-window"><div class="code-toolbar"><div class="code-tabs" role="tablist" aria-label="Code examples"><button role="tab" aria-selected="true" aria-controls="example-go" id="tab-go" data-tab="go">Go library</button><button role="tab" aria-selected="false" aria-controls="example-cli" id="tab-cli" data-tab="cli" tabindex="-1">CLI</button><button role="tab" aria-selected="false" aria-controls="example-api" id="tab-api" data-tab="api" tabindex="-1">HTTP API</button></div><button class="code-copy" aria-label="Copy code example">Copy <span aria-hidden="true">▢</span></button></div>
+<div id="example-go" role="tabpanel" aria-labelledby="tab-go" tabindex="0"><div class="filename">main.go</div><pre><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="str">"fmt"</span>
+    <span class="str">"log"</span>
+    <span class="str">"github.com/zerfoo/zerfoo"</span>
+)
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    model, err := zerfoo.<span class="fn">Load</span>(<span class="str">"./model.gguf"</span>)
+    <span class="kw">if</span> err != nil { log.<span class="fn">Fatal</span>(err) }
+    <span class="kw">defer</span> model.<span class="fn">Close</span>()
+
+    reply, err := model.<span class="fn">Chat</span>(<span class="str">"Why Go?"</span>)
+    <span class="kw">if</span> err != nil { log.<span class="fn">Fatal</span>(err) }
+    fmt.<span class="fn">Println</span>(reply)
+}</code></pre></div>
+<div id="example-cli" role="tabpanel" aria-labelledby="tab-cli" tabindex="0" hidden><div class="filename">terminal</div><pre><code><span class="comment"># Install the command-line tool</span>
+go install github.com/zerfoo/zerfoo/cmd/zerfoo@latest
+
+<span class="comment"># Run a local, compatible GGUF model</span>
+zerfoo run ./model.gguf
+
+<span class="comment"># Serve it over HTTP</span>
+zerfoo serve ./model.gguf --port 8080</code></pre></div>
+<div id="example-api" role="tabpanel" aria-labelledby="tab-api" tabindex="0" hidden><div class="filename">terminal · start the server using the CLI tab</div><pre><code>curl http://localhost:8080/v1/chat/completions \
+  -H <span class="str">'Content-Type: application/json'</span> \
+  -d <span class="str">'{
+    "model": "./model.gguf",
+    "messages": [
+      {"role": "user", "content": "Why Go?"}
+    ],
+    "stream": true
+  }'</span></code></pre></div><div class="code-bottom"><span class="status-dot"></span> Real API. Local execution. <a href="https://pkg.go.dev/github.com/zerfoo/zerfoo">Go reference ↗</a></div></div></div></section>
+</main><footer class="container footer"><div><a class="wordmark" href="/"><svg viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" d="M4 18C12 7 24 5 36 5V11.7C22 10.7 12 14 4 22Z M4 28C12 26 17 18 29 17C32 16.8 34 16.8 36 17.8V20C25 20 20 25 15 30C11 33 8 33.8 4 34Z"/></svg>zerfoo</a><p>A product of <a href="https://sire.run">Sire Run, Inc.</a> Built by <a href="https://ndungu.dev/">David Ndungu.</a></p></div><div class="footer-links"><a href="/docs/">Documentation ↗</a><a href="/docs/blog/">Engineering journal ↗</a><a href="https://github.com/zerfoo/zerfoo">GitHub ↗</a><a href="https://github.com/zerfoo/zerfoo/blob/main/LICENSE">Apache 2.0 ↗</a></div><div class="footer-bottom"><span>CREATE. TRAIN. RUN. YOURS.</span><span>BUILT IN THE OPEN <span class="cross">+</span></span></div></footer>
+<div class="toast" role="status" aria-live="polite"></div></body></html>
