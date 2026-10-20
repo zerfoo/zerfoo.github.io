@@ -1,10 +1,10 @@
 ---
-title: Documentation
+title: Zerfoo ML framework documentation
 weight: 1
 bookToc: false
 ---
 
-# Build AI into your Go application
+# Build AI in Go with the Zerfoo ML framework
 
 Zerfoo brings model loading, generation, and serving into a Go library. Start with a compatible GGUF model, make your first inference call, and choose the interface that fits your application.
 

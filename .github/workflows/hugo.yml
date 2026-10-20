@@ -32,8 +32,15 @@ jobs:
       - name: Install Dart Sass
         run: sudo snap install dart-sass
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
       - name: Build
-        run: hugo --minify
+        run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
