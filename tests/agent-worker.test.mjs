@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import worker,{prefersMarkdown} from '../worker/site.mjs';
-const assets=new Map([['/','<!doctype html><html><main>Designer</main></html>'],['/docs/','<!doctype html><html>Docs</html>'],['/index.md','# Zerfoo\n\nDesign models with the Zerfoo ML framework.'],['/docs/index.md','# Zerfoo documentation\n\nRead the API reference.'],['/llms.txt','# Zerfoo\n\nAgent instructions.']]);
+const assets=new Map([['/','<!doctype html><html><main>Designer</main></html>'],['/docs/','<!doctype html><html>Docs</html>'],['/create/','<!doctype html><html><main>Model designer</main></html>'],['/create/index.md','# Zerfoo model designer\n\nDesign a model on your own hardware.'],['/index.md','# Zerfoo\n\nDesign models with the Zerfoo ML framework.'],['/docs/index.md','# Zerfoo documentation\n\nRead the API reference.'],['/llms.txt','# Zerfoo\n\nAgent instructions.']]);
 const env={ASSETS:{fetch:async request=>{const path=new URL(request.url).pathname;return new Response(assets.get(path)||'<h1>Not found</h1>',{status:assets.has(path)?200:404,headers:{'Content-Type':path.endsWith('.md')?'application/octet-stream':'text/html'}});}}};
 const fetch=(path,accept='text/html',method='GET')=>worker.fetch(new Request('https://zer.foo'+path,{method,headers:{Accept:accept}}),env);
 test('Accept quality and exclusions preserve browser HTML while explicitly negotiating Markdown',()=>{
@@ -7,7 +7,7 @@ test('Accept quality and exclusions preserve browser HTML while explicitly negot
  for(const value of ['', '*/*','text/html','text/markdown;q=0','text/markdown;q=.1,text/html;q=.9','text/markdown;q=0,*/*;q=1'])assert.equal(prefersMarkdown(value),false);
 });
 test('homepage and docs negotiate actual Markdown and advertise alternatives; HTML stays HTML',async()=>{
- for(const path of ['/','/docs/'])for(const accept of ['text/markdown','text/html']){const r=await fetch(path,accept);assert.equal(r.status,200);assert.match(r.headers.get('content-type'),new RegExp(accept));assert.match(r.headers.get('vary'),/Accept/);assert.match(r.headers.get('link'),/rel="alternate"/);assert.match(await r.text(),accept==='text/markdown'?/^# Zerfoo/:/<!doctype html>/);}
+ for(const path of ['/','/docs/','/create/'])for(const accept of ['text/markdown','text/html']){const r=await fetch(path,accept);assert.equal(r.status,200);assert.match(r.headers.get('content-type'),new RegExp(accept));assert.match(r.headers.get('vary'),/Accept/);assert.match(r.headers.get('link'),/rel="alternate"/);assert.match(await r.text(),accept==='text/markdown'?/^# Zerfoo/:/<!doctype html>/);}
 });
 test('Markdown 404 has correct final status, type, explanation and discovery links',async()=>{
  const r=await fetch('/__missing','text/markdown');assert.equal(r.status,404);assert.match(r.headers.get('content-type'),/text\/markdown/);assert.match(r.headers.get('vary'),/Accept/);const body=await r.text();assert.ok(body.length>20);assert.match(body,/\[llms.txt\]\(https:\/\/zer.foo\/llms.txt\)/);assert.doesNotMatch(body,/<html/);
@@ -17,9 +17,9 @@ test('API discovery is real JSON and unknown operations return structured resolu
  const discovery=await fetch('/api');assert.equal(discovery.status,200);assert.equal((await discovery.json()).openapi,'https://zer.foo/openapi.json');
  for(const [path,method,status] of [['/api/missing','GET',404],['/api','POST',405],['/docs/','POST',405],['/missing','GET',404]]){const r=await fetch(path,'application/json',method);assert.equal(r.status,status);const e=await r.json();for(const key of ['code','message','error','hint','docs'])assert.equal(typeof e[key],'string');}
 });
-test('HEAD omits body and legacy creation redirect and security headers remain intact',async()=>{
+test('HEAD omits body and dedicated designer serves HTML with security headers',async()=>{
  const head=await fetch('/','text/markdown','HEAD');assert.equal(head.status,200);assert.equal(await head.text(),'');assert.match(head.headers.get('content-type'),/markdown/);
- const redirect=await fetch('/create/');assert.equal(redirect.status,301);assert.equal(redirect.headers.get('location'),'https://zer.foo/#message');assert.equal(redirect.headers.get('x-content-type-options'),'nosniff');
+ const designer=await fetch('/create/');assert.equal(designer.status,200);assert.equal(designer.headers.get('location'),null);assert.equal(designer.headers.get('x-content-type-options'),'nosniff');const csp=designer.headers.get('content-security-policy');assert.match(csp,/connect-src 'self' https:\/\/design.zer.foo/);assert.doesNotMatch(csp,/unsafe-inline|unsafe-eval/);assert.match(csp,/fonts.googleapis.com/);
  const text=await fetch('/llms.txt');assert.match(text.headers.get('content-type'),/text\/markdown/);
 });
 import {readFile} from 'node:fs/promises';import {htmlToMarkdown} from '../scripts/build-agent-content.mjs';

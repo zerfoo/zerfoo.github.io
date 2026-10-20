@@ -2,7 +2,7 @@
 
 > Design, train, evaluate and run machine-learning models on hardware you control, using Go.
 
-Zerfoo is an open-source Go ML framework and CLI. The website provides a hosted model designer with an interactive architecture viewer. A design is not trained weights: download the project and train, validate and run it on your own hardware.
+Zerfoo is an open-source Go ML framework and CLI. The homepage introduces the framework and its origins in Therfoo (first commit January 23, 2019). The [model designer](https://zer.foo/create/) is a separate workspace with hosted chat and an interactive architecture viewer. A design is not trained weights: download the project and train, validate and run it on your own hardware.
 
 ## When to use Zerfoo
 
