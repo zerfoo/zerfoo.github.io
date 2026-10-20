@@ -1,3 +1,4 @@
+import {handleMcp} from './mcp.mjs';
 const markdownType='text/markdown; charset=utf-8';
 export function prefersMarkdown(accept=''){
  const ranges=accept.toLowerCase().split(',').map(part=>{const [type,...params]=part.trim().split(';');const q=params.find(p=>p.trim().startsWith('q='));const value=q?Number(q.trim().slice(2)):1;return {type,q:Number.isFinite(value)&&value>=0&&value<=1?value:0};});
@@ -15,10 +16,11 @@ function finish(response,request,{alternate}={}){
 }
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname,md=prefersMarkdown(request.headers.get('Accept')||'');
+ if(path==='/mcp'||path==='/mcp/')return finish(await handleMcp(request,env),request);
  if(['/create','/create/','/create/index.html'].includes(path))return finish(Response.redirect(new URL('/#message',url.origin),301),request);
  if(path==='/api'||path==='/api/'){
   if(!['GET','HEAD'].includes(request.method)){const error=apiError(405,'method_not_allowed','API discovery supports GET or HEAD.','Fetch /openapi.json to find supported operations.');error.headers.set('Allow','GET, HEAD');return finish(error,request);}
-  return finish(Response.json({name:'Zerfoo ML framework',description:'Agent resources and the hosted model designer. Inference and training run on your own hardware.',openapi:'https://zer.foo/openapi.json',docs:'https://zer.foo/agents/',designer:'https://design.zer.foo/api/design',cli:'https://zer.foo/cli/'},{headers:{'Cache-Control':'public, max-age=300'}}),request);
+  return finish(Response.json({name:'Zerfoo ML framework',description:'Agent resources and the hosted model designer. Inference and training run on your own hardware.',openapi:'https://zer.foo/openapi.json',docs:'https://zer.foo/agents/',designer:'https://design.zer.foo/api/design',cli:'https://zer.foo/cli/',mcp:'https://zer.foo/mcp'},{headers:{'Cache-Control':'public, max-age=300'}}),request);
  }
  if(path.startsWith('/api/'))return finish(apiError(404,'not_found','No API operation exists at this URL.','Use /openapi.json. The hosted designer is at https://design.zer.foo/api/design.'),request);
  if(!['GET','HEAD'].includes(request.method)){const error=apiError(405,'method_not_allowed','This resource supports GET or HEAD.','Use the method documented in /openapi.json.');error.headers.set('Allow','GET, HEAD');return finish(error,request);}

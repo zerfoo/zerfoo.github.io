@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {adaptProject} from '../static/create/model.mjs';
+import {handoffInstruction} from '../static/create/handoff.mjs';
 const project={version:1,task:'numeric_classification',recipe:'dense-relu-16-v1',objective:'Classify flowers',features:['length','width'],target:'species',hardware:'CPU',runtime:'cpu/float32'};
 test('actual numeric projects retain unknown output dimensions and exact feature names',()=>{const m=adaptProject(project);assert.deepEqual(m.layers[0].items,['length','width']);assert.equal(m.layers[1].count,16);assert.equal(m.layers[1].params,48);assert.equal(m.layers[3].count,null);assert.equal(m.parameters,null);assert.equal(m.example,false);});
 test('component designs and briefs do not invent graph edges or dimensions',()=>{const m=adaptProject({...project,task:'component_design',recipe:null,components:['layers/attention:NewAttention'],architecture:'Attend over the input.'});assert.equal(m.supported,false);assert.equal(m.layers[0].shape,'Not yet specified');assert.equal(m.layers[0].params,null);assert.deepEqual(adaptProject({...project,task:'design_brief',recipe:null}).layers,[]);});
@@ -19,7 +20,7 @@ test('real chat handlers keep successful history and downloads across clarificat
   result=Response.json({error:'Please wait',code:'rate_limited'},{status:429});await submit('Add another feature');assert.equal(el('message').value,'Add another feature');assert.equal(el('objective').textContent,project.objective);assert.equal(el('send').disabled,false);assert.equal(el('download').disabled,false);
   result=Response.json({message:'Which feature?',project:null});await submit('Add another feature');assert.equal(requests.at(-1).body.messages.length,5);assert.equal(el('objective').textContent,project.objective);
   result=Response.json({message:'Invalid',project:{version:99}});await submit('bad');assert.match(el('error').textContent,/version-1/);assert.equal(el('objective').textContent,project.objective);
-  el('new-design').onclick();assert.equal(el('download').disabled,true);assert.equal(el('messages').children.length,0);
+  el('new-design').onclick();assert.equal(el('instruction').textContent,handoffInstruction);assert.equal(el('download').disabled,true);assert.equal(el('messages').children.length,0);
   result=Response.json({message:'Starting fresh.',project:null});await submit('New problem');assert.equal(requests.at(-1).body.messages.length,1);
   const count=requests.length;await submit('x'.repeat(1801));assert.equal(requests.length,count);assert.match(el('error').textContent,/size limit/);
  }finally{globalThis.document=oldDocument;globalThis.fetch=oldFetch;}
