@@ -431,3 +431,8 @@
 .book-brand span, .book-page .markdown h1 { background: none; -webkit-text-fill-color: currentColor; color: var(--body-font-color); font-weight: 500; letter-spacing: -.035em; }
 a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--color-link); outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+// Documentation uses the same full-width canvas as the designer and site pages.
+.container { max-width: none; width: 100%; }
+.book-page { min-width: 0; padding-inline: clamp(1rem, 3vw, 4rem); }
+.book-page .markdown > p { max-width: 80ch; }

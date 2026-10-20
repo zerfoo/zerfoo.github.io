@@ -6,11 +6,11 @@
  system.addEventListener('change',()=>{let saved;try{saved=localStorage.getItem('zerfoo-theme');}catch{}if(!saved){root.dataset.theme=system.matches?'light':'dark';update();}});
  const menu=document.querySelector('#nav-menu'),toggle=document.querySelector('.menu-toggle');
  // Nonmodal dialog keeps the header's close button available; background is inert.
- const background=[document.querySelector('main'),document.querySelector('footer')];
+ const background=[document.querySelector('main'),document.querySelector('footer')].filter(Boolean);
  function setMenu(open,focus=false){toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Close menu':'Open menu');document.body.classList.toggle('menu-open',open);background.forEach(el=>el.inert=open);if(open){menu.show();menu.querySelector('a').focus();}else{menu.close();if(focus)toggle.focus();}}
  toggle.onclick=()=>setMenu(!menu.open,true);menu.querySelectorAll('a').forEach(a=>a.onclick=()=>setMenu(false));
  document.addEventListener('keydown',e=>{if(!menu.open)return;if(e.key==='Escape'){e.preventDefault();setMenu(false,true);}if(e.key==='Tab'){const items=[theme,toggle,...menu.querySelectorAll('a')],i=items.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();items.at(-1).focus();}else if(!e.shiftKey&&i===items.length-1){e.preventDefault();items[0].focus();}}});
- matchMedia('(min-width:1025px)').addEventListener('change',e=>{if(e.matches&&menu.open)setMenu(false);});
+ matchMedia('(min-width:1101px)').addEventListener('change',e=>{if(e.matches&&menu.open)setMenu(false);});
   let toastTimer;
   async function copy(text) {
     const toast = document.querySelector('.toast');
@@ -32,7 +32,7 @@
       if (index >= 0) { e.preventDefault(); selectTab(tabs[index], true); }
     });
   });
-  document.querySelector('.code-copy').addEventListener('click', () => copy(document.querySelector('[role=tabpanel]:not([hidden]) code').textContent));
+  document.querySelector('.code-copy')?.addEventListener('click', () => copy(document.querySelector('[role=tabpanel]:not([hidden]) code').textContent));
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  async function entrance(){if(reduced.matches){root.classList.remove('entrance');return;}await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,400))]);const anims=[],ease='cubic-bezier(.16,1,.3,1)',d=innerWidth<=680?.7:1;function lift(el,delay,duration=650,y=14){if(el)anims.push(el.animate([{opacity:0,transform:`translateY(${y*d}px)`},{opacity:1,transform:'translateY(0)'}],{duration,delay,easing:ease,fill:'both'}));}
  lift(document.querySelector('.wordmark'),0,600,0);document.querySelectorAll('.nav-links a').forEach((el,i)=>lift(el,100+i*50,500,10));lift(document.querySelector('.nav-actions'),260,500,10);
