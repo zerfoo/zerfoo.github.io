@@ -856,3 +856,6 @@ font-size:13px}
 .information-page .footer{padding-block:32px;margin-top:24px}
 @media(max-width:1100px){.nav{grid-template-columns:1fr auto}.nav>.nav-links,.desktop-cta{display:none}.menu-toggle{display:flex}}
 @media(max-width:680px){.information-page .information-title{padding-top:32px;padding-bottom:24px}.information-page .section{padding-block:40px}.information-page .code-layout,.information-page .models-layout,.information-page .faq{grid-template-columns:1fr;gap:32px}.information-page .section-heading{display:block}.information-page .section-heading>p{margin-top:20px}.information-page .feature{padding:24px}}
+.agent-resources .section>p,.agent-resources .section>ol{max-width:80ch;line-height:1.8;margin-block:20px}
+.agent-resources .section>h2:not(:first-child),.agent-resources .section>h3{margin-top:40px}
+.agent-resources .section>pre{overflow:auto;background:var(--raised);padding:24px;border-radius:16px;margin-block:20px}

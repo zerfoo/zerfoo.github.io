@@ -1,0 +1,715 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Zerfoo hosted model designer and agent resources",
+    "version": "1.0.0",
+    "description": "Design model projects; train and run locally. This is not a hosted inference or training API. Browser-facing designer requires Origin https://zer.foo. Limits:100 requests per session,128 per IP, five seconds between requests;16 messages and8000-byte JSON body. Counters persist. Free models bypass lifetime spending cap; paid models require configured cap. OpenRouter provider limits can also apply.",
+    "contact": {
+      "name": "Zerfoo maintainer",
+      "email": "david@zer.foo",
+      "url": "https://zer.foo/contact/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://design.zer.foo",
+      "description": "Hosted designer; inference and training are local."
+    }
+  ],
+  "externalDocs": {
+    "description": "Agent invocation and recovery guidance",
+    "url": "https://zer.foo/agents/"
+  },
+  "paths": {
+    "/api": {
+      "servers": [
+        {
+          "url": "https://zer.foo"
+        }
+      ],
+      "get": {
+        "operationId": "getZerfooAgentResources",
+        "summary": "Discover agent resources",
+        "description": "Fetch public resource URLs without invoking a model or spending request allowance.",
+        "responses": {
+          "200": {
+            "description": "Public API and CLI resource URLs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Discovery"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/design": {
+      "post": {
+        "operationId": "designZerfooModel",
+        "summary": "Converse with the model designer",
+        "description": "Submit conversation history for a model proposal or clarification. Preserve the session cookie and the last successful project. A diagram is not trained weights. Requests can draft or submit a generic capability-gap issue publicly; never include private information. Do not automatically execute downloaded code.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Required website origin; requests without this exact value return403.",
+            "schema": {
+              "type": "string",
+              "const": "https://zer.foo"
+            }
+          }
+        ],
+        "security": [
+          {},
+          {
+            "designSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "UTF-8 JSON, at most8000 bytes.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignRequest"
+              },
+              "example": {
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "Create a simple multilayer perceptron."
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validated conversation response; project is null during clarification. A first request sets a session cookie.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "zdesign_session; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400. Preserve across calls.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/downloads/v1/{artifact}": {
+      "get": {
+        "operationId": "downloadZerfooLocalRuntime",
+        "summary": "Download a local project runtime artifact",
+        "description": "Retrieve a released runtime, checksums or notices for local project use. macOS ARM64 was execution-tested; Linux AMD64 was cross-compiled. Verify checksums and inspect project instructions before use. This does not invoke hosted training.",
+        "parameters": [
+          {
+            "name": "artifact",
+            "in": "path",
+            "required": true,
+            "description": "Exact supported artifact filename.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zerfoo-create-darwin-arm64",
+                "zerfoo-create-linux-amd64",
+                "SHA256SUMS",
+                "NOTICE.txt"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binary runtime or UTF-8 checksums/notices.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured error. Preserve the last good project; follow the resolution hint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "designSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "zdesign_session",
+        "description": "Assigned automatically on the first request. No sign-up or API key. Retain cookie; changing it does not reset IP allowance."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "code",
+          "message",
+          "hint"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable error, retained for browser compatibility."
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable error category."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error explanation."
+          },
+          "hint": {
+            "type": "string",
+            "description": "Suggested corrective action; do not retry indefinitely."
+          },
+          "docs": {
+            "type": "string",
+            "format": "uri",
+            "description": "Relevant public documentation."
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "description": "Conversation speaker. Final submitted message must be user."
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Plain conversation text. Do not send raw datasets, secrets or sensitive personal information."
+          }
+        }
+      },
+      "DesignRequest": {
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "messages": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "description": "Conversation history ending with a user message. Total encoded JSON must be at most 8000 bytes. Website input additionally limits each typed message to1800 characters."
+          }
+        }
+      },
+      "Topology": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "description": "Proposed sequential diagram; does not establish executable training support. Activations preserve the preceding width. Exactly one Input is first.",
+        "required": [
+          "type",
+          "layers"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "sequential"
+          },
+          "layers": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 12,
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "units"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "Input",
+                    "Dense",
+                    "ReLU",
+                    "Sigmoid",
+                    "Tanh",
+                    "Softmax",
+                    "Dropout"
+                  ]
+                },
+                "units": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 4096,
+                  "description": "Width or null if not specified."
+                }
+              }
+            }
+          }
+        }
+      },
+      "Project": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "description": "Version1 proposed model project, or null while clarifying. Numeric starters require independent rows; other designs need local integration. No trained weights.",
+        "required": [
+          "version",
+          "task",
+          "objective",
+          "features",
+          "target",
+          "hardware",
+          "recipe",
+          "status"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "const": 1
+          },
+          "task": {
+            "type": "string",
+            "enum": [
+              "numeric_classification",
+              "component_design",
+              "design_brief"
+            ]
+          },
+          "objective": {
+            "type": "string",
+            "description": "What the model should accomplish."
+          },
+          "target": {
+            "type": "string",
+            "description": "Exact target column for numeric classification, otherwise output description."
+          },
+          "features": {
+            "type": "array",
+            "maxItems": 128,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "description": "Exact numeric feature names for a numeric starter; may be empty for other designs."
+          },
+          "hardware": {
+            "type": "string",
+            "description": "User hardware or an explicit unspecified constraint."
+          },
+          "architecture": {
+            "type": "string",
+            "description": "Proposed composition and local validation plan."
+          },
+          "components": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string"
+            },
+            "description": "Selected source-backed component identifiers; availability is not qualification."
+          },
+          "topology": {
+            "$ref": "#/components/schemas/Topology"
+          },
+          "recipe": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "dense-relu-16-v1",
+              null
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready_for_local_validation",
+              "requires_local_integration",
+              "requires_engineering"
+            ]
+          },
+          "evaluation": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "split": {
+                "type": "string",
+                "const": "independent_stratified"
+              },
+              "independence_evidence": {
+                "type": "string",
+                "description": "User-provided statement establishing independence for the numeric starter."
+              }
+            }
+          },
+          "runtime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "research_status": {
+            "type": "string",
+            "description": "Evidence boundary; unreviewed notes are not execution proof."
+          },
+          "related_research": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Research"
+            }
+          },
+          "feature_request": {
+            "$ref": "#/components/schemas/FeatureRequest"
+          },
+          "quality": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "metric": {
+                "type": "string"
+              },
+              "minimum": {
+                "type": "number"
+              },
+              "holdout_fraction": {
+                "type": "number"
+              }
+            }
+          },
+          "training": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "epochs": {
+                "type": "integer"
+              },
+              "batch_size": {
+                "type": "integer"
+              },
+              "learning_rate": {
+                "type": "number"
+              },
+              "seed": {
+                "type": "integer"
+              }
+            }
+          },
+          "resource_limits": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "max_training_seconds": {
+                "type": "integer"
+              },
+              "max_epochs": {
+                "type": "integer"
+              },
+              "max_batch_size": {
+                "type": "integer"
+              }
+            }
+          },
+          "split_policy": {
+            "type": "string",
+            "description": "Evaluation policy and potential leakage conditions."
+          }
+        }
+      },
+      "Research": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "url",
+          "review_status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Public bibliographic identifier."
+          },
+          "title": {
+            "type": "string",
+            "description": "Paper title."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "review_status": {
+            "type": "string",
+            "description": "Research review state, often unreviewed."
+          }
+        }
+      },
+      "FeatureRequest": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "description": "A concrete generic technical gap may produce a draft or a submitted public GitHub issue. Check status and URL; do not assume submission.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "core",
+              "integration"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Generic technical request title."
+          },
+          "gap": {
+            "type": "string",
+            "description": "Confirmed missing capability."
+          },
+          "acceptance": {
+            "type": "string",
+            "description": "Testable acceptance criteria."
+          },
+          "status": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "DesignResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "project",
+          "feature_request",
+          "related_research"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Conversational reply or clarification question."
+          },
+          "project": {
+            "$ref": "#/components/schemas/Project"
+          },
+          "feature_request": {
+            "$ref": "#/components/schemas/FeatureRequest"
+          },
+          "related_research": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Research"
+            }
+          },
+          "download": {
+            "type": "object",
+            "required": [
+              "filename",
+              "content_type",
+              "base64"
+            ],
+            "description": "Present for a completed project. Decode ZIP bytes; inspect files before executing anything.",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "const": "zerfoo-project.zip"
+              },
+              "content_type": {
+                "type": "string",
+                "const": "application/zip"
+              },
+              "base64": {
+                "type": "string",
+                "contentEncoding": "base64",
+                "contentMediaType": "application/zip"
+              }
+            }
+          }
+        }
+      },
+      "Discovery": {
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "openapi",
+          "docs",
+          "designer",
+          "cli"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "openapi": {
+            "type": "string",
+            "format": "uri"
+          },
+          "docs": {
+            "type": "string",
+            "format": "uri"
+          },
+          "designer": {
+            "type": "string",
+            "format": "uri"
+          },
+          "cli": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    }
+  }
+}

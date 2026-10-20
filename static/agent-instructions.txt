@@ -1,0 +1,22 @@
+# Zerfoo agent instructions
+
+## When to use Zerfoo
+
+Reach for Zerfoo when you need local machine-learning inference in Go, a GGUF model embedded in an application, or a model server on hardware you control. Use the designer to propose a model architecture or create a numeric CSV classification starter. Use the public Go library and CLI for execution. The website does not host training or provide unlimited hosted inference.
+
+## How an agent should call Zerfoo
+
+1.  Read [llms.txt](/llms.txt) and the [OpenAPI specification](/openapi.json). Read the [documentation](/docs/) and model evidence before choosing a workload.
+2.  For local execution, [install the official CLI](/cli/), obtain a suitable GGUF model and follow the quickstart. Do not execute generated code or download model weights without the user's authorization.
+3.  For a hosted design, POST JSON to `https://design.zer.foo/api/design` with `Origin: https://zer.foo`. Preserve the HttpOnly `zdesign_session` cookie between requests. Send the conversation as a messages array with user and assistant roles, ending with a user message.
+4.  A response with `project: null` asks for clarification. A project download contains files and instructions, not trained weights. Follow its AGENTS.md locally, inspect code, choose an evaluation split, and verify saved artifacts in a fresh process.
+
+## Limits and recovery
+
+The hosted designer permits 100 requests per browser session and 128 per IP, with five seconds between requests. The browser cookie lasts 24 hours; IP counters do not automatically reset. Each request allows up to 16 conversation messages, 2,000 characters per message and 8,000 bytes total JSON. The website input is limited to 1,800 characters. Start a new design when the conversation-size limit is reached; this does not reset request counts. Free models bypass the lifetime spending cap; paid models require it.
+
+Read JSON error code, message and hint. On 400, correct the input. On 403, check the required Origin header. On 429, avoid retry loops: the limit can be a request allowance, pacing or paid spending cap. On 502/503, preserve the last good project and retry later only when appropriate. Provider limits may also apply.
+
+## Use evidence, not registration alone
+
+Check the [verified-model matrix](https://github.com/zerfoo/zerfoo/blob/main/docs/verified-models.md). A proposed diagram or available constructor is not evidence of working training, speed, accuracy or device support. Keep datasets and credentials local. Hosted inference from another provider may be a better fit when local hardware is unavailable. Complex architectures can require engineering and validation before use.

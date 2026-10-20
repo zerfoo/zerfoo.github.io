@@ -5,10 +5,14 @@
     "test": "node --test tests/*.test.mjs",
     "test:browser": "node tests/site.browser.mjs && node tests/landing.browser.mjs",
     "dev": "wrangler dev --config wrangler.site.jsonc",
-    "deploy": "wrangler deploy --config wrangler.site.jsonc"
+    "deploy": "npm run build && wrangler deploy --config wrangler.site.jsonc",
+    "build": "hugo --minify && node scripts/build-agent-content.mjs"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "^13.1.0",
     "@playwright/test": "^1.63.0",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2",
     "wrangler": "^4.0.0"
   }
 }

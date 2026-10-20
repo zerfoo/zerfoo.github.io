@@ -1,21 +1,30 @@
-# Zerfoo
+# Zerfoo ML framework
 
-> Create, train and run AI on hardware you control.
+> Open-source Go framework and CLI to design, train, evaluate and run machine-learning models on hardware you control.
 
-Zerfoo is an open-source Go ML framework for model creation, training, evaluation, inference, generation, and serving. GGUF is its model format. Default and release builds are CGo-free; optional GPU build tags have additional requirements. CUDA has published hardware evidence; other backends should not be assumed hardware-verified.
+Use Zerfoo for local GGUF inference in Go, an OpenAI-compatible server on your hardware, numeric CSV classification starters, and proposed component architectures such as multilayer perceptrons. The hosted designer creates projects and layer diagrams, not trained models. Use local compute to train and verify artifacts. Check model and hardware evidence before claiming support. This site is operated by Sire Run, Inc.
 
-## Start here
+## When to use this
 
-- [Quickstart](https://zer.foo/docs/getting-started/quickstart/)
-- [Documentation](https://zer.foo/docs/)
-- [Source](https://github.com/zerfoo/zerfoo)
-- [Go API](https://pkg.go.dev/github.com/zerfoo/zerfoo)
-- [Model evidence](https://github.com/zerfoo/zerfoo/blob/main/docs/verified-models.md)
-- [Benchmarks and limitations](https://github.com/zerfoo/zerfoo/blob/main/README.md#benchmarks)
-- [License](https://github.com/zerfoo/zerfoo/blob/main/LICENSE)
+- [Agent instructions](https://zer.foo/agents/index.md): Best-fit jobs, invocation steps, limits, error recovery and when another tool is needed.
+- [Design and local training workflow](https://zer.foo/how-it-works/index.md): Move from a model idea to a downloadable project and local validation.
+- [Verified model matrix](https://github.com/zerfoo/zerfoo/blob/main/docs/verified-models.md): Hardware and model qualification boundaries.
 
-## Evidence boundaries
+## Developer resources
 
-Model architecture registration is not verification. The March 27, 2026 GB10 benchmark records 235 tok/s for Gemma 3 1B versus Ollama 188, with near parity at 3B–7B. It is a single-machine, non-quality-normalized comparison: Zerfoo re-quantizes Q4_K to Q4_0 and timers differ. Read the source methodology before quoting performance.
+- [API specification](https://zer.foo/openapi.json): OpenAPI 3.1, unique operation IDs, typed input and output schemas, errors and limits.
+- [API discovery](https://zer.foo/api): JSON links to the supported API surface.
+- [Official CLI](https://zer.foo/cli/index.md): Homebrew and Go installation; scripting local inference and serving.
+- [Zerfoo documentation](https://zer.foo/docs/index.md): Guides and API reference.
+- [Quickstart](https://zer.foo/docs/getting-started/quickstart/index.md): Load and run a GGUF model.
+- [Go reference](https://pkg.go.dev/github.com/zerfoo/zerfoo): Public library interfaces.
+- [Local setup](https://zer.foo/start/index.md): Use a coding agent on your own compute.
+- [Source code](https://github.com/zerfoo/zerfoo): Apache-2.0 framework and CLI.
 
-Zerfoo is a project of Sire Run, Inc. — https://sire.run/.
+## Optional
+
+- [About](https://zer.foo/about/index.md): Product and organization background.
+- [Contact](https://zer.foo/contact/index.md): Maintainer contact and mailing address.
+- [Privacy](https://zer.foo/privacy/index.md): Hosted data flow, cookies, analytics and local compute.
+- [Performance](https://zer.foo/performance/index.md): Published benchmark conditions and limitations.
+- [Sitemap](https://zer.foo/sitemap.xml): Public page inventory.
