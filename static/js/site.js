@@ -10,7 +10,7 @@
  function setMenu(open,focus=false){toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Close menu':'Open menu');document.body.classList.toggle('menu-open',open);background.forEach(el=>el.inert=open);if(open){menu.show();menu.querySelector('a').focus();}else{menu.close();if(focus)toggle.focus();}}
  toggle.onclick=()=>setMenu(!menu.open,true);menu.querySelectorAll('a').forEach(a=>a.onclick=()=>setMenu(false));
  document.addEventListener('keydown',e=>{if(!menu.open)return;if(e.key==='Escape'){e.preventDefault();setMenu(false,true);}if(e.key==='Tab'){const items=[theme,toggle,...menu.querySelectorAll('a')],i=items.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();items.at(-1).focus();}else if(!e.shiftKey&&i===items.length-1){e.preventDefault();items[0].focus();}}});
- matchMedia('(min-width:1025px)').addEventListener('change',e=>{if(e.matches&&menu.open)setMenu(false);});
+ matchMedia('(min-width:1101px)').addEventListener('change',e=>{if(e.matches&&menu.open)setMenu(false);});
   let toastTimer;
   async function copy(text) {
     const toast = document.querySelector('.toast');
